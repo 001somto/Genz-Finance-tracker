@@ -5,16 +5,17 @@ import * as api from './api';
 
 // --- GEN-Z COLORS ---
 const GENZ_COLORS = {
-    aqua: '#5CC4F6', // Lighter Aqua for Income/Highlights
-    purple: '#C084FC', // Primary accent
-    pink: '#F355B8', // Secondary accent/Expense
-    bgDark: '#0B0B0F', // Near black, slightly blue/purple tint
-    cardDark: '#1E1E28', // Dark grey for cards
-    borderDark: '#3A3A4A', // For borders
-    textLight: '#E0E0F0',
-    textDim: '#A0A0B0',
-    shadow: '#5CC4FF50', // Aqua light shadow
-    shadowHover: '#F355B850', // Pink light shadow
+    // Muted, less saturated palette for gentler UI
+    aqua: '#4AA8C6',
+    purple: '#9A7DE6',
+    pink: '#D77AA8',
+    bgDark: '#0F1116',
+    cardDark: '#20222A',
+    borderDark: '#2F3138',
+    textLight: '#E6E7EB',
+    textDim: '#9AA0A8',
+    shadow: '#4AA8C650',
+    shadowHover: '#D77AA850',
 };
 
 const COLORS = [GENZ_COLORS.pink, GENZ_COLORS.purple, GENZ_COLORS.aqua, GENZ_COLORS.textDim, '#4ade80', '#ffffff'];
@@ -153,6 +154,24 @@ const App = () => {
     const [customCategory, setCustomCategory] = useState('');
     const [note, setNote] = useState('');
 
+    // Budgets & Savings UI state
+    const [budgets, setBudgets] = useState([]);
+    const [savingsGoals, setSavingsGoals] = useState([]);
+    const [showBudgetModal, setShowBudgetModal] = useState(false);
+    const [showSavingsModal, setShowSavingsModal] = useState(false);
+    const [budgetNameInput, setBudgetNameInput] = useState('');
+    const [budgetAmountInput, setBudgetAmountInput] = useState('');
+    const [goalNameInput, setGoalNameInput] = useState('');
+    const [goalTargetInput, setGoalTargetInput] = useState('');
+    // Alerts / toasts
+    const [alerts, setAlerts] = useState([]);
+
+    const addAlert = (message, level = 'info', ttl = 5000) => {
+        const id = Date.now() + Math.random();
+        setAlerts(prev => [{ id, message, level }, ...prev]);
+        setTimeout(() => setAlerts(prev => prev.filter(a => a.id !== id)), ttl);
+    };
+
     // load user from localStorage (token) and fetch transactions
     useEffect(() => {
         const savedUser = localStorage.getItem('spendsave_user');
@@ -187,6 +206,19 @@ const App = () => {
         } else {
             // no token: clear any old local storage data
             localStorage.removeItem('spendsave_transactions');
+        }
+    }, []);
+
+    // Load budgets & savings from localStorage on mount
+    useEffect(() => {
+        try {
+            const b = JSON.parse(localStorage.getItem('spendsave_budgets') || '[]');
+            const s = JSON.parse(localStorage.getItem('spendsave_savings') || '[]');
+            setBudgets(Array.isArray(b) ? b : []);
+            setSavingsGoals(Array.isArray(s) ? s : []);
+        } catch (e) {
+            setBudgets([]);
+            setSavingsGoals([]);
         }
     }, []);
 
@@ -260,6 +292,32 @@ const App = () => {
             note,
             createdAt: new Date().toISOString()
         };
+            // Frontend overspending/budget checks before submitting to API
+            const amt = parseFloat(amount) || 0;
+            if (transactionType === 'expense') {
+               { {
+                        // Keep the user-facing message consistent with server error
+                        const insuffMsg = '🚨You do not have enough balance for this expense!';
+                        addAlert(insuffMsg, 'warning');
+                        // Also show blocking alert so user sees immediate message
+                        alert(insuffMsg);
+                        return;
+                    }
+                }
+
+                // 2) Budget exceed check: if a budget exists with same name, warn
+                const matchedBudget = budgets.find(b => b.name.toLowerCase() === (finalCategory || '').toLowerCase());
+                if (matchedBudget) {
+                    const spentInCategory = transactions
+                        .filter(t => t.type === 'expense' && (t.category || '').toLowerCase() === matchedBudget.name.toLowerCase())
+                        .reduce((s, t) => s + (t.amount || 0), 0);
+                    if ((spentInCategory + amt) > matchedBudget.amount) {
+                        const cont2 = window.confirm(`Warning — this will exceed your budget "${matchedBudget.name}" (limit: ₦${matchedBudget.amount.toLocaleString()}). Continue?`);
+                        addAlert(`Budget warning: ${matchedBudget.name} exceeded`, 'warning');
+                        if (!cont2) return;
+                    }
+                }
+            }
         try {
             let updatedTxs;
 
@@ -284,10 +342,13 @@ const App = () => {
             setTransactionType('expense');
 
         } catch (err) {
-            if (err?.body?.message === "Insufficient balance. Cannot record this expense.") {
-                alert("🚨 You do not have enough balance for this expense!");
+            // Normalize server/client "insufficient" errors to a friendly message
+            const insuffMsg = '🚨You do not have enough balance for this expense!';
+            const serverMsg = err?.body?.message || err?.message || '';
+            if ((serverMsg || '').toString().toLowerCase().includes('insufficient')) {
+                alert(insuffMsg);
             } else {
-                alert(err?.body?.message || err?.message || "Transaction failed");
+                alert(serverMsg || 'Transaction failed');
             }
             console.error('Transaction error', err);
         }
@@ -302,6 +363,54 @@ const App = () => {
             console.error(err);
             alert('Failed to delete');
         }
+    };
+
+    // --- Budgets & Savings handlers ---
+    const openAddBudget = () => setShowBudgetModal(true);
+    const openAddSavings = () => setShowSavingsModal(true);
+
+    const submitBudgetForm = (e) => {
+        e.preventDefault();
+        if (!budgetNameInput || !budgetAmountInput) return alert('Please provide a name and amount');
+        const item = { id: Date.now(), name: budgetNameInput.trim(), amount: parseFloat(budgetAmountInput) };
+        setBudgets(prev => {
+            const next = [item, ...prev];
+            localStorage.setItem('spendsave_budgets', JSON.stringify(next));
+            return next;
+        });
+        setBudgetNameInput('');
+        setBudgetAmountInput('');
+        setShowBudgetModal(false);
+    };
+
+    const submitSavingsForm = (e) => {
+        e.preventDefault();
+        if (!goalNameInput || !goalTargetInput) return alert('Please provide a name and target amount');
+        const goal = { id: Date.now(), name: goalNameInput.trim(), target: parseFloat(goalTargetInput), progress: 0 };
+        setSavingsGoals(prev => {
+            const next = [goal, ...prev];
+            localStorage.setItem('spendsave_savings', JSON.stringify(next));
+            return next;
+        });
+        setGoalNameInput('');
+        setGoalTargetInput('');
+        setShowSavingsModal(false);
+    };
+
+    const deleteBudget = (id) => {
+        setBudgets(prev => {
+            const next = prev.filter(b => b.id !== id);
+            localStorage.setItem('spendsave_budgets', JSON.stringify(next));
+            return next;
+        });
+    };
+
+    const deleteSavingsGoal = (id) => {
+        setSavingsGoals(prev => {
+            const next = prev.filter(s => s.id !== id);
+            localStorage.setItem('spendsave_savings', JSON.stringify(next));
+            return next;
+        });
     };
 
     const startEdit = (transaction) => {
@@ -408,6 +517,15 @@ const App = () => {
     return (
         <>
             <style>{fontStyle}</style>
+
+            {/* Alerts / Toasts */}
+            <div className="fixed top-6 right-6 z-50 flex flex-col gap-2">
+                {alerts.map(a => (
+                    <div key={a.id} className={`px-4 py-2 rounded-lg max-w-sm text-sm font-medium ${a.level === 'warning' ? 'bg-yellow-700 text-black' : a.level === 'error' ? 'bg-red-700 text-white' : 'bg-genz-card text-genz-textLight'}`}>
+                        {a.message}
+                    </div>
+                ))}
+            </div>
 
             {/* Login / Signup (Unchanged) */}
             {(currentPage === 'login' || currentPage === 'signup') && (
@@ -790,31 +908,32 @@ const App = () => {
                             <ResponsiveContainer width="100%" height={250}>
                                 <PieChart>
                                     <Pie
-                                        data={getIncomeCategoryData()}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
+                                       data={getIncomeCategoryData()}
+                                          cx="50%"
+                                          cy="50%"
+                                         innerRadius={60}
                                         outerRadius={80}
                                         paddingAngle={5}
-                                        dataKey="value"
-                                        stroke="none"
-                                    >
-                                        {getIncomeCategoryData().map((entry, index) => (
-                                            <Cell
-                                                key={`cell-${index}`}
-                                                fill={COLORS[index % COLORS.length]}
-                                                strokeWidth={index === 0 ? 4 : 0}  // highlight biggest income
-                                                stroke={GENZ_COLORS.aqua}         // aqua glow for income
-                                            />
-                                        ))}
+                                      dataKey="value"
+                                       stroke="none"
+>
+                          {getIncomeCategoryData().map((entry, index) => (
+                          <Cell
+                           key={`cell-${index}`}
+                           fill={COLORS[index % COLORS.length]} 
+                            strokeWidth={index === 0 ? 4 : 0} 
+                             stroke={GENZ_COLORS.pink}
+        />
+                   ))}
+                   {/* Highlight the biggest spending category  */}
+
                                     </Pie>
                                     <Tooltip contentStyle={{ backgroundColor: GENZ_COLORS.bgDark, border: `1px solid ${GENZ_COLORS.borderDark}`, borderRadius: '12px', color: GENZ_COLORS.textLight }} formatter={(value) => [`₦${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, 'Amount']} />
                                 </PieChart>
                             </ResponsiveContainer>
-                            <CategoryLegend 
-                                data={getIncomeCategoryData()} 
-                                highlightName={getIncomeCategoryData().length > 0 ? getIncomeCategoryData()[0].name : null}
-                            />
+                            <CategoryLegend data={getIncomeCategoryData()} 
+                              highlightName={getCategoryData().length > 0 ? getCategoryData()[0].name : null}
+                              />
                         </div>
                     </div>
 
@@ -879,8 +998,18 @@ const App = () => {
                                 <span className="text-white font-bold">{transactions.length}</span>
                             </div>
                             <div className="flex justify-between items-center mb-2">
-                                <span className="text-genz-textDim text-sm font-medium">Money Managed:</span>
-                                <span className="text-white font-bold">₦{(totalIncome + totalExpense).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                <span className="text-genz-textDim text-sm font-medium">Budgets:</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-white font-bold">{budgets.length}</span>
+                                    <button onClick={openAddBudget} className="text-xs bg-genz-aqua/10 px-3 py-1 rounded-md text-genz-aqua">Add Budget</button>
+                                </div>
+                            </div>
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-genz-textDim text-sm font-medium">Savings Goals:</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-white font-bold">{savingsGoals.length}</span>
+                                    <button onClick={openAddSavings} className="text-xs bg-genz-purple/10 px-3 py-1 rounded-md text-genz-purple">Add Goal</button>
+                                </div>
                             </div>
                             <div className="flex justify-between items-center mb-2">
                                 <span className="text-genz-textDim text-sm font-medium">Current Streak:</span>
@@ -900,6 +1029,38 @@ const App = () => {
 
 
             {/* Global Bottom Navigation Bar (Unchanged) */}
+            {/* Modals for adding budgets and savings goals */}
+            {showBudgetModal && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+                    <div className="w-full max-w-md bg-genz-card rounded-2xl p-6 border border-genz-card">
+                        <h3 className="text-lg font-bold mb-4">Add Budget</h3>
+                        <form onSubmit={submitBudgetForm} className="space-y-3">
+                            <input value={budgetNameInput} onChange={(e) => setBudgetNameInput(e.target.value)} placeholder="Budget name" className="w-full bg-black/20 px-4 py-3 rounded-md" />
+                            <input value={budgetAmountInput} onChange={(e) => setBudgetAmountInput(e.target.value)} placeholder="Amount" type="number" className="w-full bg-black/20 px-4 py-3 rounded-md" />
+                            <div className="flex justify-end gap-2 mt-2">
+                                <button type="button" onClick={() => setShowBudgetModal(false)} className="px-4 py-2 rounded-md bg-black/20">Cancel</button>
+                                <button type="submit" className="px-4 py-2 rounded-md bg-genz-aqua text-black">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {showSavingsModal && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+                    <div className="w-full max-w-md bg-genz-card rounded-2xl p-6 border border-genz-card">
+                        <h3 className="text-lg font-bold mb-4">Add Savings Goal</h3>
+                        <form onSubmit={submitSavingsForm} className="space-y-3">
+                            <input value={goalNameInput} onChange={(e) => setGoalNameInput(e.target.value)} placeholder="Goal name" className="w-full bg-black/20 px-4 py-3 rounded-md" />
+                            <input value={goalTargetInput} onChange={(e) => setGoalTargetInput(e.target.value)} placeholder="Target amount" type="number" className="w-full bg-black/20 px-4 py-3 rounded-md" />
+                            <div className="flex justify-end gap-2 mt-2">
+                                <button type="button" onClick={() => setShowSavingsModal(false)} className="px-4 py-2 rounded-md bg-black/20">Cancel</button>
+                                <button type="submit" className="px-4 py-2 rounded-md bg-genz-purple text-black">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
             {(currentPage === 'dashboard' || currentPage === 'analytics' || currentPage === 'profile') && user && (
                 <div className="fixed bottom-0 left-0 right-0 h-20 bg-genz-card/95 backdrop-blur-md border-t border-genz-card flex justify-around items-center z-40 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
                     <button
@@ -930,3 +1091,8 @@ const App = () => {
 };
 
 export default App;
+
+/* Modals for Budgets & Savings (rendered by App via state) */
+// Note: These are placed after the component export for clarity in the file,
+// but they rely on App's state and handlers. We will instead render them
+// inline inside the component — update: move modal JSX into the component render.
