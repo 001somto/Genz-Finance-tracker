@@ -17,5 +17,11 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/transactions', require('./routes/transactions'));
 
+// Global Error Handler
+app.use((err, req, res, next) => {
+	console.error('Unhandled Error:', err);
+	res.status(500).send('Server Error');
+});
+
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Server running on ${PORT}`));
