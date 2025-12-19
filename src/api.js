@@ -2,7 +2,7 @@
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
   window?.API_BASE ||
-  "http://localhost:4000";
+  "https://genz-finance-tracker.onrender.com";
 
 async function request(path, options = {}) {
   const token = localStorage.getItem("spendsave_token");

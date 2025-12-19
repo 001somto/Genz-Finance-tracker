@@ -80,6 +80,22 @@ body {
     animation: slide-down 0.3s ease-out forwards;
 }
 
+/* Pop-in for centered notifications - Simplified to scale only */
+@keyframes pop-in {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.animate-pop-in {
+    animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
 /* NEW: Hero Specific Animations */
 @keyframes hero-fade {
     from {
@@ -207,8 +223,8 @@ const Notification = ({ message, type = 'info', onClose }) => {
     };
 
     return (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[200] animate-slide-down">
-            <div className={`${typeStyles[type]} rounded-2xl px-6 py-4 shadow-2xl border-2 flex items-center gap-3 min-w-[300px] max-w-[90vw] backdrop-blur-sm`}>
+        <div className="fixed inset-0 flex items-center justify-center p-6 z-[250] pointer-events-none">
+            <div className={`${typeStyles[type]} pointer-events-auto rounded-2xl px-6 py-4 shadow-2xl border-2 flex items-center gap-3 w-full max-w-[320px] backdrop-blur-sm animate-pop-in`}>
                 <span className="text-2xl">{icons[type]}</span>
                 <p className="font-bold text-sm flex-1 whitespace-pre-line drop-shadow-sm">{message}</p>
                 <button
@@ -800,76 +816,81 @@ const App = () => {
                     <div className="absolute top-[-10%] left-[-10%] w-64 h-64 bg-genz-pink rounded-full blur-[100px] opacity-30 animate-pulse"></div>
                     <div className="absolute bottom-[-10%] right-[-10%] w-80 h-80 bg-genz-purple rounded-full blur-[100px] opacity-30 animate-pulse"></div>
 
-                    <div className="bg-genz-card/80 backdrop-blur-md rounded-3xl p-8 w-full max-w-md border border-genz-card shadow-[0_0_40px_rgba(192,132,252,0.1)] relative z-10">
+                    {/* Auth Container - Keeps button and box together */}
+                    <div className="relative z-10 w-full max-w-md flex flex-col gap-6">
+                        {/* Back Button - Positioned closer to the box */}
                         <button
                             onClick={() => setCurrentPage('home')}
-                            className="absolute top-6 left-6 text-white/40 hover:text-white transition-all flex items-center gap-2 group"
+                            className="self-start text-white/40 hover:text-white transition-all flex items-center gap-2 group px-2 py-2 rounded-xl hover:bg-white/5"
                         >
                             <Icons.ArrowLeft />
-                            <span className="text-[10px] font-bold uppercase tracking-widest transition-all">back to home</span>
+                            <span className="text-lg font-medium transition-all">Back to home</span>
                         </button>
-                        <div className="text-center mb-10 pt-4">
-                            <h1 className="text-5xl font-black text-white mb-2 tracking-tighter shadow-genz-text">
-                                SPEND<span className="text-genz-pink">SAVE</span>
-                            </h1>
-                            <p className="text-genz-textDim text-sm tracking-widest">{authMode === 'login' ? 'Welcome back! 👋' : 'Join the money tracking revolution 🚀'}</p>
-                        </div>
 
-                        <div className="flex bg-black/50 p-1 rounded-2xl mb-8 border border-genz-card">
-                            <button
-                                onClick={() => setAuthMode('login')}
-                                className={`flex-1 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 ${authMode === 'login'
-                                    ? 'bg-genz-purple text-black shadow-genz-aqua'
-                                    : 'text-genz-textDim hover:text-white'
-                                    }`}
-                            >
-                                Login
-                            </button>
-                            <button
-                                onClick={() => setAuthMode('signup')}
-                                className={`flex-1 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 ${authMode === 'signup'
-                                    ? 'bg-genz-purple text-black shadow-genz-aqua'
-                                    : 'text-genz-textDim hover:text-white'
-                                    }`}
-                            >
-                                Sign Up
-                            </button>
-                        </div>
+                        <div className="bg-genz-card/80 backdrop-blur-md rounded-3xl p-8 w-full border border-genz-card shadow-[0_0_40px_rgba(192,132,252,0.1)]">
+                            <div className="text-center mb-10 pt-4">
+                                <h1 className="text-5xl font-black text-white mb-2 tracking-tighter shadow-genz-text">
+                                    SPEND<span className="text-genz-pink">SAVE</span>
+                                </h1>
+                                <p className="text-genz-textDim text-sm tracking-widest">{authMode === 'login' ? 'Welcome back! 👋' : 'Join the money tracking revolution 🚀'}</p>
+                            </div>
 
-                        <form onSubmit={handleAuth} className="space-y-4">
-                            <input
-                                type="email"
-                                placeholder="EMAIL"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full bg-black/50 text-white border-2 border-genz-card rounded-2xl px-5 py-4 focus:outline-none focus:border-genz-aqua focus:shadow-[0_0_15px_rgba(92,196,246,0.3)] transition-all placeholder:text-genz-textDim/50 font-medium"
-                                required
-                            />
-                            {authMode === 'signup' && (
+                            <div className="flex bg-black/50 p-1 rounded-2xl mb-8 border border-genz-card">
+                                <button
+                                    onClick={() => setAuthMode('login')}
+                                    className={`flex-1 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 ${authMode === 'login'
+                                        ? 'bg-genz-purple text-black shadow-genz-aqua'
+                                        : 'text-genz-textDim hover:text-white'
+                                        }`}
+                                >
+                                    Login
+                                </button>
+                                <button
+                                    onClick={() => setAuthMode('signup')}
+                                    className={`flex-1 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 ${authMode === 'signup'
+                                        ? 'bg-genz-purple text-black shadow-genz-aqua'
+                                        : 'text-genz-textDim hover:text-white'
+                                        }`}
+                                >
+                                    Sign Up
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleAuth} className="space-y-4">
                                 <input
-                                    type="text"
-                                    placeholder="USERNAME"
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
+                                    type="email"
+                                    placeholder="EMAIL"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                     className="w-full bg-black/50 text-white border-2 border-genz-card rounded-2xl px-5 py-4 focus:outline-none focus:border-genz-aqua focus:shadow-[0_0_15px_rgba(92,196,246,0.3)] transition-all placeholder:text-genz-textDim/50 font-medium"
                                     required
                                 />
-                            )}
-                            <input
-                                type="password"
-                                placeholder="PASSWORD"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-black/50 text-white border-2 border-genz-card rounded-2xl px-5 py-4 focus:outline-none focus:border-genz-aqua focus:shadow-[0_0_15px_rgba(92,196,246,0.3)] transition-all placeholder:text-genz-textDim/50 font-medium"
-                                required
-                            />
-                            <button
-                                type="submit"
-                                className="w-full bg-genz-purple text-black py-4 rounded-2xl font-black uppercase tracking-wider hover:bg-genz-pink hover:scale-[1.02] transition-all duration-300 shadow-genz-purple-brutalist hover:shadow-genz-pink-brutalist active:translate-y-1 active:shadow-none"
-                            >
-                                {authMode === 'login' ? 'Let\'s Go' : 'Create Account'}
-                            </button>
-                        </form>
+                                {authMode === 'signup' && (
+                                    <input
+                                        type="text"
+                                        placeholder="USERNAME"
+                                        value={username}
+                                        onChange={(e) => setUsername(e.target.value)}
+                                        className="w-full bg-black/50 text-white border-2 border-genz-card rounded-2xl px-5 py-4 focus:outline-none focus:border-genz-aqua focus:shadow-[0_0_15px_rgba(92,196,246,0.3)] transition-all placeholder:text-genz-textDim/50 font-medium"
+                                        required
+                                    />
+                                )}
+                                <input
+                                    type="password"
+                                    placeholder="PASSWORD"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full bg-black/50 text-white border-2 border-genz-card rounded-2xl px-5 py-4 focus:outline-none focus:border-genz-aqua focus:shadow-[0_0_15px_rgba(92,196,246,0.3)] transition-all placeholder:text-genz-textDim/50 font-medium"
+                                    required
+                                />
+                                <button
+                                    type="submit"
+                                    className="w-full bg-genz-purple text-black py-4 rounded-2xl font-black uppercase tracking-wider hover:bg-genz-pink hover:scale-[1.02] transition-all duration-300 shadow-genz-purple-brutalist hover:shadow-genz-pink-brutalist active:translate-y-1 active:shadow-none"
+                                >
+                                    {authMode === 'login' ? "Let's Go" : 'Create Account'}
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             )}
@@ -948,10 +969,10 @@ const App = () => {
                                 </div>
                             )}
                         </div>
-                    </div>
+                    </div >
 
                     {/* Floating Action Button */}
-                    <button
+                    < button
                         onClick={() => {
                             setEditingTransaction(null);
                             setTransactionType('expense');
@@ -964,424 +985,372 @@ const App = () => {
                         className="fixed bottom-28 right-6 bg-genz-pink text-black w-16 h-16 rounded-2xl shadow-genz-purple-brutalist flex items-center justify-center hover:translate-y-1 hover:shadow-none transition-all z-50 border-2 border-genz-purple"
                     >
                         <Icons.Plus />
-                    </button>
-                </div>
+                    </button >
+                </div >
             )}
 
             {/* Add Transaction (Unchanged) */}
-            {currentPage === 'add' && (
-                <div className="min-h-screen bg-genz-dark p-6 pb-24 text-white">
-                    <div className="flex items-center gap-4 mb-8">
-                        <button onClick={() => { setCurrentPage('dashboard'); setEditingTransaction(null); }} className="bg-genz-card p-3 rounded-full hover:bg-black/50 border border-genz-card">
-                            <Icons.ArrowLeft />
-                        </button>
-                        <h1 className="text-2xl font-black uppercase tracking-wider text-genz-aqua">{editingTransaction ? 'Edit' : 'New'} Move</h1>
-                    </div>
-
-                    <form onSubmit={addTransaction} className="space-y-6">
-                        <div className="grid grid-cols-2 gap-4 p-1 bg-genz-card rounded-2xl border border-genz-card">
-                            <button
-                                type="button"
-                                onClick={() => !editingTransaction && setTransactionType('expense')}
-                                className={`py-4 rounded-xl font-bold uppercase tracking-wider transition-all ${transactionType === 'expense'
-                                    ? 'bg-genz-pink text-black shadow-lg'
-                                    : 'text-genz-textDim hover:text-white'
-                                    } ${editingTransaction ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            >
-                                Expense
+            {
+                currentPage === 'add' && (
+                    <div className="min-h-screen bg-genz-dark p-6 pb-24 text-white">
+                        <div className="flex items-center gap-4 mb-8">
+                            <button onClick={() => { setCurrentPage('dashboard'); setEditingTransaction(null); }} className="bg-genz-card p-3 rounded-full hover:bg-black/50 border border-genz-card">
+                                <Icons.ArrowLeft />
                             </button>
-                            <button
-                                type="button"
-                                onClick={() => !editingTransaction && setTransactionType('income')}
-                                className={`py-4 rounded-xl font-bold uppercase tracking-wider transition-all ${transactionType === 'income'
-                                    ? 'bg-genz-aqua text-black shadow-lg'
-                                    : 'text-genz-textDim hover:text-white'
-                                    } ${editingTransaction ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            >
-                                Income
-                            </button>
+                            <h1 className="text-2xl font-black uppercase tracking-wider text-genz-aqua">{editingTransaction ? 'Edit' : 'New'} Move</h1>
                         </div>
 
-                        <div>
-                            <label className="text-genz-purple text-xs font-bold uppercase tracking-widest mb-2 block ml-2">Amount</label>
-                            <div className="relative">
-                                <span className="absolute left-6 top-1/2 -translate-y-1/2 text-genz-textDim/50 text-2xl font-light">₦</span>
+                        <form onSubmit={addTransaction} className="space-y-6">
+                            <div className="grid grid-cols-2 gap-4 p-1 bg-genz-card rounded-2xl border border-genz-card">
+                                <button
+                                    type="button"
+                                    onClick={() => !editingTransaction && setTransactionType('expense')}
+                                    className={`py-4 rounded-xl font-bold uppercase tracking-wider transition-all ${transactionType === 'expense'
+                                        ? 'bg-genz-pink text-black shadow-lg'
+                                        : 'text-genz-textDim hover:text-white'
+                                        } ${editingTransaction ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                    Expense
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => !editingTransaction && setTransactionType('income')}
+                                    className={`py-4 rounded-xl font-bold uppercase tracking-wider transition-all ${transactionType === 'income'
+                                        ? 'bg-genz-aqua text-black shadow-lg'
+                                        : 'text-genz-textDim hover:text-white'
+                                        } ${editingTransaction ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                    Income
+                                </button>
+                            </div>
+
+                            <div>
+                                <label className="text-genz-purple text-xs font-bold uppercase tracking-widest mb-2 block ml-2">Amount</label>
+                                <div className="relative">
+                                    <span className="absolute left-6 top-1/2 -translate-y-1/2 text-genz-textDim/50 text-2xl font-light">₦</span>
+                                    <input
+                                        type="number"
+                                        value={amount}
+                                        onChange={(e) => setAmount(e.target.value)}
+                                        placeholder="0"
+                                        disabled={!!editingTransaction}
+                                        className={`w-full bg-genz-card text-white border-2 border-genz-card rounded-[2rem] pl-12 pr-6 py-6 text-4xl font-black focus:outline-none focus:border-genz-purple transition-all placeholder:text-genz-textDim/50 ${editingTransaction ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-genz-purple text-xs font-bold uppercase tracking-widest mb-2 block ml-2">Category</label>
+                                <div className="grid grid-cols-3 gap-3">
+                                    {(transactionType === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES).map(cat => (
+                                        <button
+                                            key={cat.name}
+                                            type="button"
+                                            onClick={() => setCategory(cat.name)}
+                                            className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${category === cat.name
+                                                ? 'bg-black/50 border-genz-aqua shadow-[0_0_15px_rgba(92,196,246,0.3)]'
+                                                : 'bg-genz-card/50 border-genz-card hover:border-genz-textDim/50'
+                                                }`}
+                                        >
+                                            <div className="text-2xl">{cat.emoji}</div>
+                                            <div className="text-[10px] font-bold uppercase tracking-wide">{cat.name}</div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {category === 'Other' && (
                                 <input
-                                    type="number"
-                                    value={amount}
-                                    onChange={(e) => setAmount(e.target.value)}
-                                    placeholder="0"
-                                    disabled={!!editingTransaction}
-                                    className={`w-full bg-genz-card text-white border-2 border-genz-card rounded-[2rem] pl-12 pr-6 py-6 text-4xl font-black focus:outline-none focus:border-genz-purple transition-all placeholder:text-genz-textDim/50 ${editingTransaction ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    type="text"
+                                    value={customCategory}
+                                    onChange={(e) => setCustomCategory(e.target.value)}
+                                    placeholder="Custom Category Name* e.g.,Birthday,Bonus, etc."
+                                    className="w-full bg-genz-card/50 text-white border-b-2 border-genz-card px-4 py-4 focus:outline-none focus:border-genz-purple transition-all placeholder:text-genz-textDim/50"
                                     required
+                                />
+                            )}
+
+                            <div>
+                                <label className="text-genz-purple text-xs font-bold uppercase tracking-widest mb-2 block ml-2">Note (optional) </label>
+                                <textarea
+                                    value={note}
+                                    onChange={(e) => setNote(e.target.value)}
+                                    placeholder="Add a note about this description..."
+                                    className="w-full bg-genz-card/50 text-white rounded-2xl px-6 py-4 border border-genz-card focus:outline-none focus:border-genz-purple resize-none placeholder:text-genz-textDim/50"
+                                    rows="2"
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                className="w-full bg-genz-aqua text-black py-5 rounded-2xl font-black hover:bg-genz-purple transition-all shadow-genz-purple-brutalist active:translate-y-1 active:shadow-none"
+                            >
+                                {editingTransaction ? 'Save Changes' : 'Add Transaction'}
+                            </button>
+                        </form>
+                    </div>
+                )
+            }
+
+            {/* Details Page (Unchanged) */}
+            {
+                currentPage === 'details' && selectedTransaction && (
+                    <div className="min-h-screen bg-genz-dark p-6 text-white flex flex-col justify-between pb-24">
+                        <div>
+                            <div className="flex items-center gap-4 mb-8">
+                                <button onClick={() => setCurrentPage('dashboard')} className="bg-genz-card p-3 rounded-full hover:bg-black/50 border border-genz-card">
+                                    <Icons.ArrowLeft />
+                                </button>
+                                <h1 className="text-xl font-black uppercase text-genz-aqua">Details</h1>
+                            </div>
+
+                            <div className="bg-genz-card border border-genz-card rounded-[2.5rem] p-10 text-center relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-genz-purple via-genz-aqua to-genz-pink"></div>
+                                <div className="text-7xl mb-6 filter drop-shadow-2xl animate-bounce">{selectedTransaction.emoji}</div>
+                                <h2 className="text-3xl font-bold text-white mb-2">{selectedTransaction.category}</h2>
+                                <p className="text-genz-textDim font-mono text-sm mb-6">{new Date(selectedTransaction.createdAt).toLocaleString()}</p>
+
+                                <div className="inline-block bg-black/50 px-8 py-4 rounded-2xl border border-genz-card">
+                                    <p className={`text-3xl font-black ${selectedTransaction.type === 'income' ? 'text-genz-aqua' : 'text-genz-pink'}`}>
+                                        {selectedTransaction.type === 'income' ? '+' : '-'}₦{(selectedTransaction.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                    </p>
+                                </div>
+
+                                {selectedTransaction.note && (
+                                    <div className="mt-8 bg-black/50 p-4 rounded-xl">
+                                        <p className="text-genz-textDim/50 text-xs uppercase font-bold mb-1">Note</p>
+                                        <p className="text-white">{selectedTransaction.note}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4 mt-8">
+                            <button
+                                onClick={() => startEdit(selectedTransaction)}
+                                className="flex-1 bg-genz-card text-white py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-black/50 transition-all flex items-center justify-center gap-2 border border-genz-card"
+                            >
+                                <Icons.Edit /> Edit
+                            </button>
+                            <button
+                                onClick={() => deleteTransaction(selectedTransaction.id)}
+                                className="flex-1 bg-red-900/20 text-red-400 py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-red-900/40 transition-all flex items-center justify-center gap-2 border border-red-600/30"
+                            >
+                                <Icons.Trash /> Delete
+                            </button>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Analytics Page (Updated) */}
+            {
+                currentPage === 'analytics' && (
+                    <div className="min-h-screen bg-genz-dark pb-28 p-6 text-white">
+                        <h1 className="text-4xl font-black text-genz-aqua mb-8">Stats 📊</h1>
+
+                        {/* Total Income vs Total Expense Comparison (Unchanged) */}
+                        <div className="grid grid-cols-2 gap-4 mb-8">
+                            <div className="bg-genz-card rounded-3xl p-5 border border-genz-card relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-20 h-20 bg-genz-aqua blur-[50px] opacity-20"></div>
+                                <p className="text-genz-textDim text-xs font-bold uppercase mb-2">In</p>
+                                <p className="text-xl font-black text-genz-aqua">+₦{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                            </div>
+                            <div className="bg-genz-card rounded-3xl p-5 border border-genz-card relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-20 h-20 bg-genz-pink blur-[50px] opacity-20"></div>
+                                <p className="text-genz-textDim text-xs font-bold uppercase mb-2">Out</p>
+                                <p className="text-xl font-black text-genz-pink">-₦{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                            </div>
+                        </div>
+                        <hr className="border-genz-borderDark/50 my-6" />
+
+                        {/* Pie Charts for Expense & Income Breakdown */}
+                        <div className="grid md:grid-cols-2 gap-6">
+                            {/* 1. Expense Pie Chart and Biggest Spending Highlight */}
+                            <div className="bg-genz-card rounded-3xl p-6 border border-genz-card">
+                                <h2 className="text-genz-textLight font-bold uppercase tracking-wider mb-6 text-sm">Expense Breakdown</h2>
+                                <ResponsiveContainer width="100%" height={250}>
+                                    <PieChart>
+                                        <Pie
+                                            data={getCategoryData()}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={60}
+                                            outerRadius={80}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                            stroke="none"
+                                        >
+                                            {getCategoryData().map((entry, index) => (
+                                                <Cell
+                                                    key={`cell-${index}`}
+                                                    fill={COLORS[index % COLORS.length]}
+                                                    stroke="none"
+                                                    onClick={() => setActiveExpenseCategory(entry.name)}
+                                                    onMouseEnter={() => setActiveExpenseCategory(entry.name)}
+                                                    onMouseLeave={() => setActiveExpenseCategory(null)}
+                                                    className="cursor-pointer transition-opacity hover:opacity-80"
+                                                />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: GENZ_COLORS.bgDark, border: `1px solid ${GENZ_COLORS.borderDark}`, borderRadius: '12px', color: GENZ_COLORS.textLight }}
+                                            itemStyle={{ color: GENZ_COLORS.textLight }}
+                                            formatter={(value) => [`₦${value.toLocaleString(undefined, { maximumFractionDigits: 0 })} (${totalExpense > 0 ? (value / totalExpense * 100).toFixed(0) : 0}%)`, 'Amount']}
+                                        />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                                {/* Highlight the biggest spending category */}
+                                <CategoryLegend
+                                    data={getCategoryData()}
+                                    highlightName={activeExpenseCategory || (getCategoryData().length > 0 ? getCategoryData()[0].name : null)}
+                                />
+                            </div>
+
+                            {/* 2. Income Pie Chart */}
+                            <div className="bg-genz-card rounded-3xl p-6 border border-genz-card">
+                                <h2 className="text-genz-textLight font-bold uppercase tracking-wider mb-6 text-sm">Income Breakdown</h2>
+                                <ResponsiveContainer width="100%" height={250}>
+                                    <PieChart>
+                                        <Pie
+                                            data={getIncomeCategoryData()}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={60}
+                                            outerRadius={80}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                            stroke="none"
+                                        >
+                                            {getIncomeCategoryData().map((entry, index) => (
+                                                <Cell
+                                                    key={`cell-${index}`}
+                                                    fill={COLORS[index % COLORS.length]}
+                                                    stroke="none"
+                                                    onClick={() => setActiveIncomeCategory(entry.name)}
+                                                    onMouseEnter={() => setActiveIncomeCategory(entry.name)}
+                                                    onMouseLeave={() => setActiveIncomeCategory(null)}
+                                                    className="cursor-pointer transition-opacity hover:opacity-80"
+                                                />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: GENZ_COLORS.bgDark, border: `1px solid ${GENZ_COLORS.borderDark}`, borderRadius: '12px', color: GENZ_COLORS.textLight }}
+                                            itemStyle={{ color: GENZ_COLORS.textLight }}
+                                            formatter={(value) => [`₦${value.toLocaleString(undefined, { maximumFractionDigits: 0 })} (${totalIncome > 0 ? (value / totalIncome * 100).toFixed(0) : 0}%)`, 'Amount']}
+                                        />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                                <CategoryLegend
+                                    data={getIncomeCategoryData()}
+                                    highlightName={activeIncomeCategory || (getIncomeCategoryData().length > 0 ? getIncomeCategoryData()[0].name : null)}
                                 />
                             </div>
                         </div>
 
-                        <div>
-                            <label className="text-genz-purple text-xs font-bold uppercase tracking-widest mb-2 block ml-2">Category</label>
-                            <div className="grid grid-cols-3 gap-3">
-                                {(transactionType === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES).map(cat => (
+                        <hr className="border-genz-borderDark/50 my-6" />
+
+                        {/* Line Chart for Spending Trends */}
+                        <div className="bg-genz-card rounded-3xl p-6 border border-genz-card">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-genz-textLight font-bold uppercase tracking-wider text-sm">Spending Trends</h2>
+                                {/* Period Toggle */}
+                                <div className="flex bg-black/50 p-1 rounded-full border border-genz-borderDark">
                                     <button
-                                        key={cat.name}
-                                        type="button"
-                                        onClick={() => setCategory(cat.name)}
-                                        className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${category === cat.name
-                                            ? 'bg-black/50 border-genz-aqua shadow-[0_0_15px_rgba(92,196,246,0.3)]'
-                                            : 'bg-genz-card/50 border-genz-card hover:border-genz-textDim/50'
+                                        onClick={() => setTimePeriod('weekly')}
+                                        className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${timePeriod === 'weekly' ? 'bg-genz-purple text-black' : 'text-genz-textDim hover:text-white'
                                             }`}
                                     >
-                                        <div className="text-2xl">{cat.emoji}</div>
-                                        <div className="text-[10px] font-bold uppercase tracking-wide">{cat.name}</div>
+                                        Weekly
                                     </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {category === 'Other' && (
-                            <input
-                                type="text"
-                                value={customCategory}
-                                onChange={(e) => setCustomCategory(e.target.value)}
-                                placeholder="Custom Category Name* e.g.,Birthday,Bonus, etc."
-                                className="w-full bg-genz-card/50 text-white border-b-2 border-genz-card px-4 py-4 focus:outline-none focus:border-genz-purple transition-all placeholder:text-genz-textDim/50"
-                                required
-                            />
-                        )}
-
-                        <div>
-                            <label className="text-genz-purple text-xs font-bold uppercase tracking-widest mb-2 block ml-2">Note (optional) </label>
-                            <textarea
-                                value={note}
-                                onChange={(e) => setNote(e.target.value)}
-                                placeholder="Add a note about this description..."
-                                className="w-full bg-genz-card/50 text-white rounded-2xl px-6 py-4 border border-genz-card focus:outline-none focus:border-genz-purple resize-none placeholder:text-genz-textDim/50"
-                                rows="2"
-                            />
-                        </div>
-
-                        <button
-                            type="submit"
-                            className="w-full bg-genz-aqua text-black py-5 rounded-2xl font-black hover:bg-genz-purple transition-all shadow-genz-purple-brutalist active:translate-y-1 active:shadow-none"
-                        >
-                            {editingTransaction ? 'Save Changes' : 'Add Transaction'}
-                        </button>
-                    </form>
-                </div>
-            )}
-
-            {/* Details Page (Unchanged) */}
-            {currentPage === 'details' && selectedTransaction && (
-                <div className="min-h-screen bg-genz-dark p-6 text-white flex flex-col justify-between pb-24">
-                    <div>
-                        <div className="flex items-center gap-4 mb-8">
-                            <button onClick={() => setCurrentPage('dashboard')} className="bg-genz-card p-3 rounded-full hover:bg-black/50 border border-genz-card">
-                                <Icons.ArrowLeft />
-                            </button>
-                            <h1 className="text-xl font-black uppercase text-genz-aqua">Details</h1>
-                        </div>
-
-                        <div className="bg-genz-card border border-genz-card rounded-[2.5rem] p-10 text-center relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-genz-purple via-genz-aqua to-genz-pink"></div>
-                            <div className="text-7xl mb-6 filter drop-shadow-2xl animate-bounce">{selectedTransaction.emoji}</div>
-                            <h2 className="text-3xl font-bold text-white mb-2">{selectedTransaction.category}</h2>
-                            <p className="text-genz-textDim font-mono text-sm mb-6">{new Date(selectedTransaction.createdAt).toLocaleString()}</p>
-
-                            <div className="inline-block bg-black/50 px-8 py-4 rounded-2xl border border-genz-card">
-                                <p className={`text-3xl font-black ${selectedTransaction.type === 'income' ? 'text-genz-aqua' : 'text-genz-pink'}`}>
-                                    {selectedTransaction.type === 'income' ? '+' : '-'}₦{(selectedTransaction.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                                </p>
-                            </div>
-
-                            {selectedTransaction.note && (
-                                <div className="mt-8 bg-black/50 p-4 rounded-xl">
-                                    <p className="text-genz-textDim/50 text-xs uppercase font-bold mb-1">Note</p>
-                                    <p className="text-white">{selectedTransaction.note}</p>
+                                    <button
+                                        onClick={() => setTimePeriod('monthly')}
+                                        className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${timePeriod === 'monthly' ? 'bg-genz-purple text-black' : 'text-genz-textDim hover:text-white'
+                                            }`}
+                                    >
+                                        Monthly
+                                    </button>
                                 </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="flex gap-4 mt-8">
-                        <button
-                            onClick={() => startEdit(selectedTransaction)}
-                            className="flex-1 bg-genz-card text-white py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-black/50 transition-all flex items-center justify-center gap-2 border border-genz-card"
-                        >
-                            <Icons.Edit /> Edit
-                        </button>
-                        <button
-                            onClick={() => deleteTransaction(selectedTransaction.id)}
-                            className="flex-1 bg-red-900/20 text-red-400 py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-red-900/40 transition-all flex items-center justify-center gap-2 border border-red-600/30"
-                        >
-                            <Icons.Trash /> Delete
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* Analytics Page (Updated) */}
-            {currentPage === 'analytics' && (
-                <div className="min-h-screen bg-genz-dark pb-28 p-6 text-white">
-                    <h1 className="text-4xl font-black text-genz-aqua mb-8">Stats 📊</h1>
-
-                    {/* Total Income vs Total Expense Comparison (Unchanged) */}
-                    <div className="grid grid-cols-2 gap-4 mb-8">
-                        <div className="bg-genz-card rounded-3xl p-5 border border-genz-card relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-20 h-20 bg-genz-aqua blur-[50px] opacity-20"></div>
-                            <p className="text-genz-textDim text-xs font-bold uppercase mb-2">In</p>
-                            <p className="text-xl font-black text-genz-aqua">+₦{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                        </div>
-                        <div className="bg-genz-card rounded-3xl p-5 border border-genz-card relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-20 h-20 bg-genz-pink blur-[50px] opacity-20"></div>
-                            <p className="text-genz-textDim text-xs font-bold uppercase mb-2">Out</p>
-                            <p className="text-xl font-black text-genz-pink">-₦{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                        </div>
-                    </div>
-                    <hr className="border-genz-borderDark/50 my-6" />
-
-                    {/* Pie Charts for Expense & Income Breakdown */}
-                    <div className="grid md:grid-cols-2 gap-6">
-                        {/* 1. Expense Pie Chart and Biggest Spending Highlight */}
-                        <div className="bg-genz-card rounded-3xl p-6 border border-genz-card">
-                            <h2 className="text-genz-textLight font-bold uppercase tracking-wider mb-6 text-sm">Expense Breakdown</h2>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <PieChart>
-                                    <Pie
-                                        data={getCategoryData()}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={80}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                        stroke="none"
-                                    >
-                                        {getCategoryData().map((entry, index) => (
-                                            <Cell
-                                                key={`cell-${index}`}
-                                                fill={COLORS[index % COLORS.length]}
-                                                stroke="none"
-                                                onClick={() => setActiveExpenseCategory(entry.name)}
-                                                onMouseEnter={() => setActiveExpenseCategory(entry.name)}
-                                                onMouseLeave={() => setActiveExpenseCategory(null)}
-                                                className="cursor-pointer transition-opacity hover:opacity-80"
-                                            />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip
-                                        contentStyle={{ backgroundColor: GENZ_COLORS.bgDark, border: `1px solid ${GENZ_COLORS.borderDark}`, borderRadius: '12px', color: GENZ_COLORS.textLight }}
-                                        itemStyle={{ color: GENZ_COLORS.textLight }}
-                                        formatter={(value) => [`₦${value.toLocaleString(undefined, { maximumFractionDigits: 0 })} (${totalExpense > 0 ? (value / totalExpense * 100).toFixed(0) : 0}%)`, 'Amount']}
-                                    />
-                                </PieChart>
-                            </ResponsiveContainer>
-                            {/* Highlight the biggest spending category */}
-                            <CategoryLegend
-                                data={getCategoryData()}
-                                highlightName={activeExpenseCategory || (getCategoryData().length > 0 ? getCategoryData()[0].name : null)}
-                            />
-                        </div>
-
-                        {/* 2. Income Pie Chart */}
-                        <div className="bg-genz-card rounded-3xl p-6 border border-genz-card">
-                            <h2 className="text-genz-textLight font-bold uppercase tracking-wider mb-6 text-sm">Income Breakdown</h2>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <PieChart>
-                                    <Pie
-                                        data={getIncomeCategoryData()}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={80}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                        stroke="none"
-                                    >
-                                        {getIncomeCategoryData().map((entry, index) => (
-                                            <Cell
-                                                key={`cell-${index}`}
-                                                fill={COLORS[index % COLORS.length]}
-                                                stroke="none"
-                                                onClick={() => setActiveIncomeCategory(entry.name)}
-                                                onMouseEnter={() => setActiveIncomeCategory(entry.name)}
-                                                onMouseLeave={() => setActiveIncomeCategory(null)}
-                                                className="cursor-pointer transition-opacity hover:opacity-80"
-                                            />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip
-                                        contentStyle={{ backgroundColor: GENZ_COLORS.bgDark, border: `1px solid ${GENZ_COLORS.borderDark}`, borderRadius: '12px', color: GENZ_COLORS.textLight }}
-                                        itemStyle={{ color: GENZ_COLORS.textLight }}
-                                        formatter={(value) => [`₦${value.toLocaleString(undefined, { maximumFractionDigits: 0 })} (${totalIncome > 0 ? (value / totalIncome * 100).toFixed(0) : 0}%)`, 'Amount']}
-                                    />
-                                </PieChart>
-                            </ResponsiveContainer>
-                            <CategoryLegend
-                                data={getIncomeCategoryData()}
-                                highlightName={activeIncomeCategory || (getIncomeCategoryData().length > 0 ? getIncomeCategoryData()[0].name : null)}
-                            />
-                        </div>
-                    </div>
-
-                    <hr className="border-genz-borderDark/50 my-6" />
-
-                    {/* Line Chart for Spending Trends */}
-                    <div className="bg-genz-card rounded-3xl p-6 border border-genz-card">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-genz-textLight font-bold uppercase tracking-wider text-sm">Spending Trends</h2>
-                            {/* Period Toggle */}
-                            <div className="flex bg-black/50 p-1 rounded-full border border-genz-borderDark">
-                                <button
-                                    onClick={() => setTimePeriod('weekly')}
-                                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${timePeriod === 'weekly' ? 'bg-genz-purple text-black' : 'text-genz-textDim hover:text-white'
-                                        }`}
-                                >
-                                    Weekly
-                                </button>
-                                <button
-                                    onClick={() => setTimePeriod('monthly')}
-                                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${timePeriod === 'monthly' ? 'bg-genz-purple text-black' : 'text-genz-textDim hover:text-white'
-                                        }`}
-                                >
-                                    Monthly
-                                </button>
                             </div>
-                        </div>
 
-                        <ResponsiveContainer width="100%" height={200}>
-                            <LineChart data={lineChartData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke={GENZ_COLORS.borderDark} vertical={false} />
-                                {/* X-Axis Key is dynamically set */}
-                                <XAxis dataKey={lineChartXAxisKey} stroke={GENZ_COLORS.textDim} fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke={GENZ_COLORS.textDim} fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `₦${(value / 1000).toFixed(0)}k`} />
-                                <Tooltip contentStyle={{ backgroundColor: GENZ_COLORS.bgDark, border: `1px solid ${GENZ_COLORS.borderDark}`, borderRadius: '8px', color: GENZ_COLORS.textLight }} />
-                                <Line type="monotone" dataKey="income" stroke={GENZ_COLORS.aqua} strokeWidth={3} dot={false} />
-                                <Line type="monotone" dataKey="expense" stroke={GENZ_COLORS.pink} strokeWidth={3} dot={false} />
-                            </LineChart>
-                        </ResponsiveContainer>
+                            <ResponsiveContainer width="100%" height={200}>
+                                <LineChart data={lineChartData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke={GENZ_COLORS.borderDark} vertical={false} />
+                                    {/* X-Axis Key is dynamically set */}
+                                    <XAxis dataKey={lineChartXAxisKey} stroke={GENZ_COLORS.textDim} fontSize={12} tickLine={false} axisLine={false} />
+                                    <YAxis stroke={GENZ_COLORS.textDim} fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `₦${(value / 1000).toFixed(0)}k`} />
+                                    <Tooltip contentStyle={{ backgroundColor: GENZ_COLORS.bgDark, border: `1px solid ${GENZ_COLORS.borderDark}`, borderRadius: '8px', color: GENZ_COLORS.textLight }} />
+                                    <Line type="monotone" dataKey="income" stroke={GENZ_COLORS.aqua} strokeWidth={3} dot={false} />
+                                    <Line type="monotone" dataKey="expense" stroke={GENZ_COLORS.pink} strokeWidth={3} dot={false} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Profile Page (Unchanged) */}
-            {currentPage === 'profile' && user && (
-                <div className="min-h-screen bg-genz-dark pb-28 p-6 text-white">
-                    <h1 className="text-4xl font-black mb-8 text-genz-purple">Profile </h1>
+            {
+                currentPage === 'profile' && user && (
+                    <div className="min-h-screen bg-genz-dark pb-28 p-6 text-white">
+                        <h1 className="text-4xl font-black mb-8 text-genz-purple">Profile </h1>
 
-                    <div className="bg-gradient-to-br from-genz-card to-black/50 rounded-[2rem] p-8 mb-6 border border-genz-card text-center relative overflow-hidden shadow-genz-purple-brutalist">
-                        <div className="absolute -top-24 -left-24 w-48 h-48 bg-genz-pink blur-[80px] opacity-40"></div>
-                        <div className="w-24 h-24 mx-auto bg-genz-aqua rounded-full flex items-center justify-center text-5xl font-black mb-4 border-4 border-genz-purple shadow-lg">
-                            {user.username ? user.username[0].toUpperCase() : 'U'}
-                        </div>
-                        <h2 className="text-3xl font-black mb-1 text-genz-aqua">{user.username || 'User'}</h2>
-                        <p className="text-genz-textDim font-mono text-xl mb-4">{user.email || 'No Email'}</p>
-
-                        <div className="mt-8 pt-4 border-t border-genz-borderDark/50">
-                            {/* Monthly Targets Section */}
-                            <div className="flex justify-between items-center mb-6">
-                                <span className="text-genz-textDim text-sm font-bold uppercase tracking-wider">Targets</span>
-                                <button
-                                    onClick={() => setShowBudgetModal(true)}
-                                    className="bg-genz-aqua/20 text-genz-aqua px-3 py-1 rounded-full text-xs font-bold hover:bg-genz-aqua hover:text-black  transition-all"
-                                >
-                                    + New Target
-                                </button>
+                        <div className="bg-gradient-to-br from-genz-card to-black/50 rounded-[2rem] p-8 mb-6 border border-genz-card text-center relative overflow-hidden shadow-genz-purple-brutalist">
+                            <div className="absolute -top-24 -left-24 w-48 h-48 bg-genz-pink blur-[80px] opacity-40"></div>
+                            <div className="w-24 h-24 mx-auto bg-genz-aqua rounded-full flex items-center justify-center text-5xl font-black mb-4 border-4 border-genz-purple shadow-lg">
+                                {user.username ? user.username[0].toUpperCase() : 'U'}
                             </div>
+                            <h2 className="text-3xl font-black mb-1 text-genz-aqua">{user.username || 'User'}</h2>
+                            <p className="text-genz-textDim font-mono text-xl mb-4">{user.email || 'No Email'}</p>
 
-                            <div className="space-y-4">
-                                {budgets.length === 0 ? (
-                                    <p className="text-center text-genz-textDim text-lg font-medium italic">✨ No targets set yet. Add one to track your spending!🎯</p>
-                                ) : (
-                                    budgets.map(budget => {
-                                        const spent = calculateBudgetProgress(budget.category);
-                                        const progress = Math.min((spent / budget.amount) * 100, 100);
-                                        const isExceeded = spent > budget.amount;
-
-                                        return (
-                                            <div key={budget.id} className="bg-black/30 rounded-xl p-3 relative group">
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xl">{budget.emoji}</span>
-                                                        <span className="font-bold text-sm">{budget.category}</span>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <span className={`text-xs font-bold ${isExceeded ? 'text-genz-pink' : 'text-white'}`}>
-                                                            ₦{spent.toLocaleString()}
-                                                        </span>
-                                                        <span className="text-genz-textDim text-[10px]"> / ₦{budget.amount.toLocaleString()}</span>
-                                                    </div>
-                                                </div>
-
-                                                {/* Progress Bar */}
-                                                <div className="w-full h-2 bg-genz-cardDark rounded-full overflow-hidden">
-                                                    <div
-                                                        className={`h-full rounded-full transition-all duration-500 ${isExceeded ? 'bg-genz-pink' : 'bg-genz-aqua'}`}
-                                                        style={{ width: `${progress}%` }}
-                                                    ></div>
-                                                </div>
-
-                                                {/* Delete Button (visible on hover) */}
-                                                <button
-                                                    onClick={() => handleDeleteBudget(budget.id)}
-                                                    className="absolute top-2 right-2 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                >
-                                                    <Icons.Trash />
-                                                </button>
-                                            </div>
-                                        );
-                                    })
-                                )}
-                            </div>
-
-
-
-                            {/* Savings Goals Section */}
-                            <div className="pt-6 border-t border-genz-borderDark/50 mt-6">
+                            <div className="mt-8 pt-4 border-t border-genz-borderDark/50">
+                                {/* Monthly Targets Section */}
                                 <div className="flex justify-between items-center mb-6">
-                                    <span className="text-genz-textDim text-sm font-bold uppercase tracking-wider">Savings Goals 💸</span>
+                                    <span className="text-genz-textDim text-sm font-bold uppercase tracking-wider">Targets</span>
                                     <button
-                                        onClick={() => setShowSavingsModal(true)}
-                                        className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs font-bold hover:bg-green-500 hover:text-black transition-all"
+                                        onClick={() => setShowBudgetModal(true)}
+                                        className="bg-genz-aqua/20 text-genz-aqua px-3 py-1 rounded-full text-xs font-bold hover:bg-genz-aqua hover:text-black  transition-all"
                                     >
-                                        + New Goal
+                                        + New Target
                                     </button>
                                 </div>
 
                                 <div className="space-y-4">
-                                    {savingsGoals.length === 0 ? (
-                                        <p className="text-center text-genz-textDim text-xl font-medium italic">✨ Set a goal to save more! 🚀</p>
+                                    {budgets.length === 0 ? (
+                                        <p className="text-center text-genz-textDim text-lg font-medium italic">✨ No targets set yet. Add one to track your spending!🎯</p>
                                     ) : (
-                                        savingsGoals.map(goal => {
-                                            const saved = calculateSavingsProgress(goal.category);
-                                            const progress = Math.min((saved / goal.amount) * 100, 100);
-                                            const isCompleted = saved >= goal.amount;
+                                        budgets.map(budget => {
+                                            const spent = calculateBudgetProgress(budget.category);
+                                            const progress = Math.min((spent / budget.amount) * 100, 100);
+                                            const isExceeded = spent > budget.amount;
 
                                             return (
-                                                <div key={goal.id} className={`rounded-xl p-3 relative group ${isCompleted ? 'bg-green-900/20 border border-green-500/30' : 'bg-black/30'}`}>
+                                                <div key={budget.id} className="bg-black/30 rounded-xl p-3 relative group">
                                                     <div className="flex justify-between items-center mb-2">
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-xl">{goal.emoji}</span>
-                                                            <span className="font-bold text-sm text-white">{goal.category}</span>
+                                                            <span className="text-xl">{budget.emoji}</span>
+                                                            <span className="font-bold text-sm">{budget.category}</span>
                                                         </div>
                                                         <div className="text-right">
-                                                            <span className="text-xs font-bold text-green-400">
-                                                                ₦{saved.toLocaleString()}
+                                                            <span className={`text-xs font-bold ${isExceeded ? 'text-genz-pink' : 'text-white'}`}>
+                                                                ₦{spent.toLocaleString()}
                                                             </span>
-                                                            <span className="text-genz-textDim text-[10px]"> / ₦{goal.amount.toLocaleString()}</span>
+                                                            <span className="text-genz-textDim text-[10px]"> / ₦{budget.amount.toLocaleString()}</span>
                                                         </div>
                                                     </div>
 
                                                     {/* Progress Bar */}
                                                     <div className="w-full h-2 bg-genz-cardDark rounded-full overflow-hidden">
                                                         <div
-                                                            className="h-full rounded-full transition-all duration-500 bg-green-500"
+                                                            className={`h-full rounded-full transition-all duration-500 ${isExceeded ? 'bg-genz-pink' : 'bg-genz-aqua'}`}
                                                             style={{ width: `${progress}%` }}
                                                         ></div>
                                                     </div>
 
                                                     {/* Delete Button (visible on hover) */}
                                                     <button
-                                                        onClick={() => handleDeleteSavingsGoal(goal.id)}
+                                                        onClick={() => handleDeleteBudget(budget.id)}
                                                         className="absolute top-2 right-2 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                                                     >
                                                         <Icons.Trash />
@@ -1391,217 +1360,279 @@ const App = () => {
                                         })
                                     )}
                                 </div>
+
+
+
+                                {/* Savings Goals Section */}
+                                <div className="pt-6 border-t border-genz-borderDark/50 mt-6">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <span className="text-genz-textDim text-sm font-bold uppercase tracking-wider">Savings Goals 💸</span>
+                                        <button
+                                            onClick={() => setShowSavingsModal(true)}
+                                            className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs font-bold hover:bg-green-500 hover:text-black transition-all"
+                                        >
+                                            + New Goal
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        {savingsGoals.length === 0 ? (
+                                            <p className="text-center text-genz-textDim text-xl font-medium italic">✨ Set a goal to save more! 🚀</p>
+                                        ) : (
+                                            savingsGoals.map(goal => {
+                                                const saved = calculateSavingsProgress(goal.category);
+                                                const progress = Math.min((saved / goal.amount) * 100, 100);
+                                                const isCompleted = saved >= goal.amount;
+
+                                                return (
+                                                    <div key={goal.id} className={`rounded-xl p-3 relative group ${isCompleted ? 'bg-green-900/20 border border-green-500/30' : 'bg-black/30'}`}>
+                                                        <div className="flex justify-between items-center mb-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-xl">{goal.emoji}</span>
+                                                                <span className="font-bold text-sm text-white">{goal.category}</span>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <span className="text-xs font-bold text-green-400">
+                                                                    ₦{saved.toLocaleString()}
+                                                                </span>
+                                                                <span className="text-genz-textDim text-[10px]"> / ₦{goal.amount.toLocaleString()}</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Progress Bar */}
+                                                        <div className="w-full h-2 bg-genz-cardDark rounded-full overflow-hidden">
+                                                            <div
+                                                                className="h-full rounded-full transition-all duration-500 bg-green-500"
+                                                                style={{ width: `${progress}%` }}
+                                                            ></div>
+                                                        </div>
+
+                                                        {/* Delete Button (visible on hover) */}
+                                                        <button
+                                                            onClick={() => handleDeleteSavingsGoal(goal.id)}
+                                                            className="absolute top-2 right-2 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
+                                                            <Icons.Trash />
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-between items-center mt-6 mb-2 pt-4 border-t border-genz-borderDark/50">
+                                    <span className="text-genz-textDim text-sm font-bold uppercase tracking-wider">Current Streak</span>
+                                    <span className="text-white font-bold">{getStreak()} 🔥</span>
+                                </div>
+
+                                {/* Badges Section */}
+                                <div className="pt-6 border-t border-genz-borderDark/50 mt-6 text-left">
+                                    <span className="text-genz-textDim text-sm font-bold uppercase tracking-wider mb-4 block">Achievements 🏆</span>
+                                    <div className="flex gap-3 flex-wrap">
+                                        {/* Badge 1: Early Bird (First Transaction) */}
+                                        {transactions.length > 0 && (
+                                            <div className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 p-2 rounded-xl flex items-center gap-2 group hover:scale-105 transition-all cursor-default">
+                                                <span className="text-2xl drop-shadow-lg">🌟</span>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] bg-yellow-500/20 text-yellow-300 px-1.5 py-0.5 rounded uppercase font-bold w-fit">Starter</span>
+                                                    <span className="text-xs font-bold text-white">First Step</span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Badge 2: Streak Master (Streak > 3) */}
+                                        {getStreak() > 3 && (
+                                            <div className="bg-gradient-to-br from-red-500/20 to-pink-500/20 border border-red-500/30 p-2 rounded-xl flex items-center gap-2 group hover:scale-105 transition-all cursor-default">
+                                                <span className="text-2xl drop-shadow-lg">🔥</span>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded uppercase font-bold w-fit">Hot</span>
+                                                    <span className="text-xs font-bold text-white">On Fire!</span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Badge 3: Goal Crusher (Completed a Savings Goal) */}
+                                        {savingsGoals.some(g => calculateSavingsProgress(g.category) >= g.amount) && (
+                                            <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 p-2 rounded-xl flex items-center gap-2 group hover:scale-105 transition-all cursor-default">
+                                                <span className="text-2xl drop-shadow-lg">💎</span>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] bg-green-500/20 text-green-300 px-1.5 py-0.5 rounded uppercase font-bold w-fit">Rich</span>
+                                                    <span className="text-xs font-bold text-white">Goal Crusher</span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Placeholder Badge (Locked) */}
+                                        {getStreak() < 30 && (
+                                            <div className="bg-black/20 border border-white/5 p-2 rounded-xl flex items-center gap-2 opacity-50 grayscale">
+                                                <span className="text-2xl">👑</span>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] bg-white/10 text-genz-textDim px-1.5 py-0.5 rounded uppercase font-bold w-fit">Locked</span>
+                                                    <span className="text-xs font-bold text-genz-textDim">Monthly King</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
                             </div>
+                        </div>
 
-                            <div className="flex justify-between items-center mt-6 mb-2 pt-4 border-t border-genz-borderDark/50">
-                                <span className="text-genz-textDim text-sm font-bold uppercase tracking-wider">Current Streak</span>
-                                <span className="text-white font-bold">{getStreak()} 🔥</span>
-                            </div>
+                        <button
+                            onClick={handleLogout}
+                            className="w-full bg-red-600/50 text-white py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-red-600 transition-all flex items-center justify-center gap-2 border border-red-600/30"
+                        >
+                            Log Out
+                        </button>
 
-                            {/* Badges Section */}
-                            <div className="pt-6 border-t border-genz-borderDark/50 mt-6 text-left">
-                                <span className="text-genz-textDim text-sm font-bold uppercase tracking-wider mb-4 block">Achievements 🏆</span>
-                                <div className="flex gap-3 flex-wrap">
-                                    {/* Badge 1: Early Bird (First Transaction) */}
-                                    {transactions.length > 0 && (
-                                        <div className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 p-2 rounded-xl flex items-center gap-2 group hover:scale-105 transition-all cursor-default">
-                                            <span className="text-2xl drop-shadow-lg">🌟</span>
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] bg-yellow-500/20 text-yellow-300 px-1.5 py-0.5 rounded uppercase font-bold w-fit">Starter</span>
-                                                <span className="text-xs font-bold text-white">First Step</span>
+                        {/* Add Budget Modal */}
+                        {showBudgetModal && (
+                            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                                <div className="bg-genz-card border border-genz-borderDark w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+                                    <h3 className="text-2xl font-black text-white mb-6">Set Target 🎯</h3>
+                                    <form onSubmit={handleAddBudget} className="space-y-4">
+                                        <div>
+                                            <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Category</label>
+                                            <div className="grid grid-cols-5 gap-2">
+                                                {EXPENSE_CATEGORIES.map(cat => (
+                                                    <button
+                                                        key={cat.name}
+                                                        type="button"
+                                                        onClick={() => setBudgetCategory(cat.name)}
+                                                        className={`aspect-square rounded-xl flex items-center justify-center text-xl transition-all ${budgetCategory === cat.name ? 'bg-genz-aqua text-white scale-110 shadow-lg shadow-genz-aqua/20' : 'bg-genz-dark text-genz-textDim hover:bg-genz-borderDark'}`}
+                                                    >
+                                                        {cat.emoji}
+                                                    </button>
+                                                ))}
                                             </div>
                                         </div>
-                                    )}
 
-                                    {/* Badge 2: Streak Master (Streak > 3) */}
-                                    {getStreak() > 3 && (
-                                        <div className="bg-gradient-to-br from-red-500/20 to-pink-500/20 border border-red-500/30 p-2 rounded-xl flex items-center gap-2 group hover:scale-105 transition-all cursor-default">
-                                            <span className="text-2xl drop-shadow-lg">🔥</span>
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded uppercase font-bold w-fit">Hot</span>
-                                                <span className="text-xs font-bold text-white">On Fire!</span>
+                                        <div>
+                                            <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Target Amount</label>
+                                            <div className="relative">
+                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-genz-textDim font-bold">₦</span>
+                                                <input
+                                                    type="number"
+                                                    value={budgetAmount}
+                                                    onChange={(e) => setBudgetAmount(e.target.value)}
+                                                    className="w-full bg-genz-dark border border-genz-borderDark rounded-xl py-4 pl-10 pr-4 text-white font-bold focus:outline-none focus:border-genz-aqua transition-colors"
+                                                    placeholder="0.00"
+                                                />
                                             </div>
                                         </div>
-                                    )}
 
-                                    {/* Badge 3: Goal Crusher (Completed a Savings Goal) */}
-                                    {savingsGoals.some(g => calculateSavingsProgress(g.category) >= g.amount) && (
-                                        <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 p-2 rounded-xl flex items-center gap-2 group hover:scale-105 transition-all cursor-default">
-                                            <span className="text-2xl drop-shadow-lg">💎</span>
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] bg-green-500/20 text-green-300 px-1.5 py-0.5 rounded uppercase font-bold w-fit">Rich</span>
-                                                <span className="text-xs font-bold text-white">Goal Crusher</span>
-                                            </div>
+                                        <div className="flex gap-3 pt-4">
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowBudgetModal(false)}
+                                                className="flex-1 py-4 rounded-xl font-bold text-genz-textDim hover:text-white hover:bg-genz-dark transition-all"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                className="flex-1 bg-genz-aqua text-white py-4 rounded-xl font-bold shadow-lg shadow-genz-aqua/20 hover:scale-[1.02] active:scale-95 transition-all"
+                                            >
+                                                Save Target
+                                            </button>
                                         </div>
-                                    )}
-
-                                    {/* Placeholder Badge (Locked) */}
-                                    {getStreak() < 30 && (
-                                        <div className="bg-black/20 border border-white/5 p-2 rounded-xl flex items-center gap-2 opacity-50 grayscale">
-                                            <span className="text-2xl">👑</span>
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] bg-white/10 text-genz-textDim px-1.5 py-0.5 rounded uppercase font-bold w-fit">Locked</span>
-                                                <span className="text-xs font-bold text-genz-textDim">Monthly King</span>
-                                            </div>
-                                        </div>
-                                    )}
+                                    </form>
                                 </div>
                             </div>
+                        )}
 
-                        </div>
+                        {/* Add Savings Modal */}
+                        {showSavingsModal && (
+                            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                                <div className="bg-genz-card border border-genz-borderDark w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+                                    <h3 className="text-2xl font-black text-white mb-6">Set Goal 💸</h3>
+                                    <form onSubmit={handleAddSavingsGoal} className="space-y-4">
+                                        <div>
+                                            <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Income</label>
+                                            <div className="grid grid-cols-4 gap-2">
+                                                {INCOME_CATEGORIES.map(cat => (
+                                                    <button
+                                                        key={cat.name}
+                                                        type="button"
+                                                        onClick={() => setSavingsCategory(cat.name)}
+                                                        className={`aspect-square rounded-xl flex items-center justify-center text-xl transition-all ${savingsCategory === cat.name ? 'bg-green-500 text-black scale-110 shadow-lg shadow-green-500/20' : 'bg-genz-dark text-genz-textDim hover:bg-genz-borderDark'}`}
+                                                    >
+                                                        {cat.emoji}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Goal Amount</label>
+                                            <div className="relative">
+                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-genz-textDim font-bold">₦</span>
+                                                <input
+                                                    type="number"
+                                                    value={savingsAmount}
+                                                    onChange={(e) => setSavingsAmount(e.target.value)}
+                                                    className="w-full bg-genz-dark border border-genz-borderDark rounded-xl py-4 pl-10 pr-4 text-white font-bold focus:outline-none focus:border-green-500 transition-colors"
+                                                    placeholder="0.00"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-3 pt-4">
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowSavingsModal(false)}
+                                                className="flex-1 py-4 rounded-xl font-bold text-genz-textDim hover:text-white hover:bg-genz-dark transition-all"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                className="flex-1 bg-green-500 text-black py-4 rounded-xl font-bold shadow-lg shadow-green-500/20 hover:scale-[1.02] active:scale-95 transition-all"
+                                            >
+                                                Save Goal
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Confetti Overlay */}
+                        {showConfetti && <Confetti />}
                     </div>
-
-                    <button
-                        onClick={handleLogout}
-                        className="w-full bg-red-600/50 text-white py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-red-600 transition-all flex items-center justify-center gap-2 border border-red-600/30"
-                    >
-                        Log Out
-                    </button>
-
-                    {/* Add Budget Modal */}
-                    {showBudgetModal && (
-                        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                            <div className="bg-genz-card border border-genz-borderDark w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-                                <h3 className="text-2xl font-black text-white mb-6">Set Target 🎯</h3>
-                                <form onSubmit={handleAddBudget} className="space-y-4">
-                                    <div>
-                                        <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Category</label>
-                                        <div className="grid grid-cols-5 gap-2">
-                                            {EXPENSE_CATEGORIES.map(cat => (
-                                                <button
-                                                    key={cat.name}
-                                                    type="button"
-                                                    onClick={() => setBudgetCategory(cat.name)}
-                                                    className={`aspect-square rounded-xl flex items-center justify-center text-xl transition-all ${budgetCategory === cat.name ? 'bg-genz-aqua text-white scale-110 shadow-lg shadow-genz-aqua/20' : 'bg-genz-dark text-genz-textDim hover:bg-genz-borderDark'}`}
-                                                >
-                                                    {cat.emoji}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Target Amount</label>
-                                        <div className="relative">
-                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-genz-textDim font-bold">₦</span>
-                                            <input
-                                                type="number"
-                                                value={budgetAmount}
-                                                onChange={(e) => setBudgetAmount(e.target.value)}
-                                                className="w-full bg-genz-dark border border-genz-borderDark rounded-xl py-4 pl-10 pr-4 text-white font-bold focus:outline-none focus:border-genz-aqua transition-colors"
-                                                placeholder="0.00"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="flex gap-3 pt-4">
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowBudgetModal(false)}
-                                            className="flex-1 py-4 rounded-xl font-bold text-genz-textDim hover:text-white hover:bg-genz-dark transition-all"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            className="flex-1 bg-genz-aqua text-white py-4 rounded-xl font-bold shadow-lg shadow-genz-aqua/20 hover:scale-[1.02] active:scale-95 transition-all"
-                                        >
-                                            Save Target
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Add Savings Modal */}
-                    {showSavingsModal && (
-                        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                            <div className="bg-genz-card border border-genz-borderDark w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-                                <h3 className="text-2xl font-black text-white mb-6">Set Goal 💸</h3>
-                                <form onSubmit={handleAddSavingsGoal} className="space-y-4">
-                                    <div>
-                                        <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Income</label>
-                                        <div className="grid grid-cols-4 gap-2">
-                                            {INCOME_CATEGORIES.map(cat => (
-                                                <button
-                                                    key={cat.name}
-                                                    type="button"
-                                                    onClick={() => setSavingsCategory(cat.name)}
-                                                    className={`aspect-square rounded-xl flex items-center justify-center text-xl transition-all ${savingsCategory === cat.name ? 'bg-green-500 text-black scale-110 shadow-lg shadow-green-500/20' : 'bg-genz-dark text-genz-textDim hover:bg-genz-borderDark'}`}
-                                                >
-                                                    {cat.emoji}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Goal Amount</label>
-                                        <div className="relative">
-                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-genz-textDim font-bold">₦</span>
-                                            <input
-                                                type="number"
-                                                value={savingsAmount}
-                                                onChange={(e) => setSavingsAmount(e.target.value)}
-                                                className="w-full bg-genz-dark border border-genz-borderDark rounded-xl py-4 pl-10 pr-4 text-white font-bold focus:outline-none focus:border-green-500 transition-colors"
-                                                placeholder="0.00"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="flex gap-3 pt-4">
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowSavingsModal(false)}
-                                            className="flex-1 py-4 rounded-xl font-bold text-genz-textDim hover:text-white hover:bg-genz-dark transition-all"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            className="flex-1 bg-green-500 text-black py-4 rounded-xl font-bold shadow-lg shadow-green-500/20 hover:scale-[1.02] active:scale-95 transition-all"
-                                        >
-                                            Save Goal
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Confetti Overlay */}
-                    {showConfetti && <Confetti />}
-                </div>
-            )}
+                )
+            }
 
 
             {/* Global Bottom Navigation Bar (Unchanged) */}
-            {(currentPage === 'dashboard' || currentPage === 'analytics' || currentPage === 'profile') && user && (
-                <div className="fixed bottom-0 left-0 right-0 h-20 bg-genz-card/95 backdrop-blur-md border-t border-genz-card flex justify-around items-center z-40 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
-                    <button
-                        onClick={() => setCurrentPage('dashboard')}
-                        className={`flex flex-col items-center p-3 rounded-xl transition-colors ${currentPage === 'dashboard' ? 'text-genz-aqua' : 'text-genz-textDim hover:text-white'}`}
-                    >
-                        <Icons.Home />
-                        <span className="text-xs font-medium mt-1">Home</span>
-                    </button>
-                    <button
-                        onClick={() => setCurrentPage('analytics')}
-                        className={`flex flex-col items-center p-3 rounded-xl transition-colors ${currentPage === 'analytics' ? 'text-genz-aqua' : 'text-genz-textDim hover:text-white'}`}
-                    >
-                        <Icons.Chart />
-                        <span className="text-xs font-medium mt-1">Stats</span>
-                    </button>
-                    <button
-                        onClick={() => setCurrentPage('profile')}
-                        className={`flex flex-col items-center p-3 rounded-xl transition-colors ${currentPage === 'profile' ? 'text-genz-aqua' : 'text-genz-textDim hover:text-white'}`}
-                    >
-                        <Icons.User />
-                        <span className="text-xs font-medium mt-1">Profile</span>
-                    </button>
-                </div>
-            )}
+            {
+                (currentPage === 'dashboard' || currentPage === 'analytics' || currentPage === 'profile') && user && (
+                    <div className="fixed bottom-0 left-0 right-0 h-20 bg-genz-card/95 backdrop-blur-md border-t border-genz-card flex justify-around items-center z-40 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
+                        <button
+                            onClick={() => setCurrentPage('dashboard')}
+                            className={`flex flex-col items-center p-3 rounded-xl transition-colors ${currentPage === 'dashboard' ? 'text-genz-aqua' : 'text-genz-textDim hover:text-white'}`}
+                        >
+                            <Icons.Home />
+                            <span className="text-xs font-medium mt-1">Home</span>
+                        </button>
+                        <button
+                            onClick={() => setCurrentPage('analytics')}
+                            className={`flex flex-col items-center p-3 rounded-xl transition-colors ${currentPage === 'analytics' ? 'text-genz-aqua' : 'text-genz-textDim hover:text-white'}`}
+                        >
+                            <Icons.Chart />
+                            <span className="text-xs font-medium mt-1">Stats</span>
+                        </button>
+                        <button
+                            onClick={() => setCurrentPage('profile')}
+                            className={`flex flex-col items-center p-3 rounded-xl transition-colors ${currentPage === 'profile' ? 'text-genz-aqua' : 'text-genz-textDim hover:text-white'}`}
+                        >
+                            <Icons.User />
+                            <span className="text-xs font-medium mt-1">Profile</span>
+                        </button>
+                    </div>
+                )
+            }
         </>
     );
 };
