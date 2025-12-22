@@ -158,21 +158,23 @@ const INCOME_CATEGORIES = [
     { name: 'Other', emoji: '💰' },
 ];
 
-// --- CategoryLegend for Analytics (Updated to handle highlighting) ---
+// --- CategoryLegend for Analytics (Compact 2-column for all devices) ---
 const CategoryLegend = ({ data, highlightName }) => (
-    <div className="mt-8 grid grid-cols-2 gap-3 text-sm">
+    <div className="mt-8 grid grid-cols-2 gap-x-2 gap-y-3 text-[11px] sm:text-sm">
         {data.map((entry, index) => (
             <div
                 key={`legend-${index}`}
-                className={`flex items-center gap-2 transition-all ${entry.name === highlightName ? 'bg-genz-dark/50 p-2 rounded-xl border border-genz-pink/50 shadow-lg' : ''}`}
+                className={`flex items-center gap-1.5 transition-all overflow-hidden ${entry.name === highlightName ? 'bg-genz-dark/50 p-1.5 rounded-xl border border-genz-pink/50 shadow-lg' : ''}`}
             >
                 <div
-                    className="w-3 h-3 rounded-full"
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                     style={{ backgroundColor: COLORS[index % COLORS.length] }}
                 />
-                <span className="text-genz-textDim">{entry.emoji}</span>
-                <span className={`font-medium ${entry.name === highlightName ? 'text-genz-pink' : 'text-genz-textLight'}`}>{entry.name}</span>
-                <span className="text-genz-textDim font-mono text-xs">
+                <span className="text-genz-textDim flex-shrink-0">{entry.emoji}</span>
+                <span className={`font-medium flex-1 truncate ${entry.name === highlightName ? 'text-genz-pink' : 'text-genz-textLight'}`}>
+                    {entry.name}
+                </span>
+                <span className="text-genz-textDim font-mono text-[10px] flex-shrink-0 ml-auto">
                     ₦{entry.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                 </span>
             </div>
@@ -965,18 +967,18 @@ const App = () => {
                             <p className="text-black/60 font-bold uppercase tracking-widest text-xs mb-2">Total Balance</p>
                             <p className="text-5xl font-black text-black tracking-tighter">₦{balance.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
 
-                            <div className="mt-8 grid grid-cols-3 gap-2">
-                                <div className="bg-black/20 backdrop-blur-sm rounded-xl p-3">
-                                    <p className="text-black text-[10px] font-black uppercase tracking-wider">Money In</p>
-                                    <p className="text-genz-aqua font-bold text-sm lg:text-lg">+₦{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                            <div className="mt-8 grid grid-cols-3 gap-1.5 items-stretch">
+                                <div className="bg-black/20 backdrop-blur-sm rounded-xl p-2.5 flex flex-col justify-between overflow-hidden">
+                                    <p className="text-black text-[10px] font-black uppercase min-h-[22px] flex items-center leading-tight break-words max-w-[42px]">Money In</p>
+                                    <p className="text-genz-aqua font-bold text-[10px] sm:text-xs lg:text-lg whitespace-nowrap">+₦{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                 </div>
-                                <div className="bg-black/20 backdrop-blur-sm rounded-xl p-3">
-                                    <p className="text-black text-[10px] font-black uppercase tracking-wider">Money Out</p>
-                                    <p className="text-genz-pink font-bold text-sm lg:text-lg">-₦{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                                <div className="bg-black/20 backdrop-blur-sm rounded-xl p-2.5 flex flex-col justify-between overflow-hidden">
+                                    <p className="text-black text-[10px] font-black uppercase min-h-[22px] flex items-center leading-tight break-words max-w-[42px]">Money Out</p>
+                                    <p className="text-genz-pink font-bold text-[10px] sm:text-xs lg:text-lg whitespace-nowrap">-₦{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                 </div>
-                                <div className="bg-black/20 backdrop-blur-sm rounded-xl p-3">
-                                    <p className="text-black text-[8px] font-black uppercase tracking-wider">Total Transactions</p>
-                                    <p className="text-white font-bold text-sm lg:text-lg">₦{(totalIncome + totalExpense).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                                <div className="bg-black/20 backdrop-blur-sm rounded-xl p-2.5 flex flex-col justify-between overflow-hidden">
+                                    <p className="text-black text-[10px] font-black uppercase min-h-[22px] flex items-center leading-tight break-words max-w-[65px]">Total Transactions</p>
+                                    <p className="text-white font-bold text-[10px] sm:text-xs lg:text-lg whitespace-nowrap">₦{(totalIncome + totalExpense).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                 </div>
                             </div>
                         </div>
