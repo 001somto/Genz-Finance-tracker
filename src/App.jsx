@@ -133,6 +133,8 @@ const Icons = {
     Edit: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>,
     Trash: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
     ArrowLeft: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
+    Eye: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>,
+    EyeOff: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88L4.573 4.574m14.853 14.853l-2.356-2.356m2.356 2.356L22 22m-4.72-4.72A9.953 9.953 0 0021.542 12c-1.274-4.057-5.064-7-9.542-7-1.274 0-2.435.215-3.513.606m0 0l2.353 2.353" /></svg>,
 };
 
 // CATEGORIES
@@ -372,11 +374,30 @@ const App = () => {
         setTimeout(() => setNotification(null), duration);
     };
 
+    // Centralized API error handler
+    const handleApiError = (err, defaultMsg = 'Action failed') => {
+        console.error('API Error:', err);
+        const isHttps = window.location.protocol === 'https:';
+        // "Failed to fetch" is the standard message for network/CORS issues in browsers
+        const isFetchError = err.message?.toLowerCase().includes('failed to fetch') || err instanceof TypeError;
+
+        if (isHttps && isFetchError) {
+            showNotification(
+                "Connection Failed! 🚨\nYou're using a secure (HTTPS) link, but the backend server might only support HTTP.\n\nPlease try changing the URL to 'http://' in your browser to fix this!",
+                'error',
+                8000
+            );
+        } else {
+            showNotification(err.body?.message || err.message || defaultMsg, 'error', 4000);
+        }
+    };
+
     // Auth state 
     const [authMode, setAuthMode] = useState('login');
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
     // Transaction form state
     const [transactionType, setTransactionType] = useState('expense');
@@ -418,7 +439,7 @@ const App = () => {
 
                     setTransactions(normalized);
                 } catch (err) {
-                    console.error('Failed to fetch transactions', err);
+                    handleApiError(err, 'Failed to fetch transactions');
                     // if token invalid, clear and force login
                     if (err.status === 401) {
                         localStorage.removeItem('spendsave_token');
@@ -440,7 +461,12 @@ const App = () => {
         // Login uses Email & Password
         if (authMode === 'login' && (!email || !password)) return;
         // Signup uses Email, Username, & Password
-        if (authMode === 'signup' && (!email || !username || !password)) return;
+        if (authMode === 'signup') {
+            if (!email || !username || !password) return;
+            if (password.length < 8) {
+                return showNotification('Password must be at least 8 characters long!', 'error');
+            }
+        }
 
         try {
             let res;
@@ -466,6 +492,12 @@ const App = () => {
             setUser(res.user);
             setCurrentPage('dashboard');
 
+            if (authMode === 'signup') {
+                showNotification(`Account Created ✨\nWelcome to SpendSave, ${res.user.username || 'User'}!`, 'success', 5000);
+            } else {
+                showNotification(`Welcome Back, ${res.user.username || 'User'}! 👋`, 'success');
+            }
+
             // fetch transactions after login
             const txs = await api.getTransactions();
             const normalized = txs.map(t => ({
@@ -475,8 +507,7 @@ const App = () => {
             setTransactions(normalized);
 
         } catch (err) {
-            console.error(err);
-            showNotification(err.body?.message || err.message || 'Auth failed', 'error', 4000);
+            handleApiError(err, 'Authentication failed');
         }
     };
 
@@ -587,12 +618,14 @@ const App = () => {
             if (editingTransaction) {
                 const id = editingTransaction._id || editingTransaction.id;
                 const updated = await api.updateTransaction(id, payload);
-                updatedTxs = transactions.map(t => ((t._id === id) || (t.id === id)) ? updated : t);
+                const normalizedUpdated = { ...updated, id: updated._id || updated.id };
+                updatedTxs = transactions.map(t => ((t._id === id) || (t.id === id)) ? normalizedUpdated : t);
                 setEditingTransaction(null);
             } else {
                 const created = await api.createTransaction(payload);
+                const normalizedCreated = { ...created, id: created._id || created.id };
                 // prepend to state
-                updatedTxs = [created, ...transactions];
+                updatedTxs = [normalizedCreated, ...transactions];
             }
 
             // Update state and reset form
@@ -665,9 +698,8 @@ const App = () => {
             if (err?.body?.message === "Insufficient balance. Cannot record this expense.") {
                 showNotification("You do not have enough balance for this expense!", 'error', 4000);
             } else {
-                showNotification(err?.body?.message || err?.message || "Transaction failed", 'error', 4000);
+                handleApiError(err, "Transaction failed");
             }
-            console.error('Transaction error', err);
         }
     };
 
@@ -678,8 +710,7 @@ const App = () => {
             setCurrentPage('dashboard');
             showNotification('Transaction deleted successfully!', 'success');
         } catch (err) {
-            console.error(err);
-            showNotification('Failed to delete transaction', 'error');
+            handleApiError(err, 'Failed to delete transaction');
         }
     };
 
@@ -875,14 +906,33 @@ const App = () => {
                                         required
                                     />
                                 )}
-                                <input
-                                    type="password"
-                                    placeholder="PASSWORD"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-black/50 text-white border-2 border-genz-card rounded-2xl px-5 py-4 focus:outline-none focus:border-genz-aqua focus:shadow-[0_0_15px_rgba(92,196,246,0.3)] transition-all placeholder:text-genz-textDim/50 font-medium"
-                                    required
-                                />
+                                <div className="relative group bg-black/50 rounded-2xl border-2 border-genz-card focus-within:border-genz-aqua focus-within:shadow-[0_0_15px_rgba(92,196,246,0.3)] transition-all">
+                                    {/* Persistent Ghost Dots (Always visible for guidance) */}
+                                    <div className="absolute left-5 right-5 top-0 bottom-0 pointer-events-none flex items-center font-mono text-2xl tracking-[0.3em] select-none z-0">
+                                        <span className="text-white/50">
+                                            {"•".repeat(Math.max(8, password.length))}
+                                        </span>
+                                    </div>
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="w-full bg-transparent text-white rounded-2xl px-5 py-4 focus:outline-none font-mono text-2xl tracking-[0.3em] relative z-10"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-genz-textDim hover:text-white transition-colors z-20"
+                                    >
+                                        {showPassword ? <Icons.EyeOff /> : <Icons.Eye />}
+                                    </button>
+                                </div>
+                                {authMode === 'signup' && (
+                                    <p className={`text-[10px] ml-2 font-bold uppercase tracking-widest ${password.length >= 8 ? 'text-genz-aqua' : 'text-genz-textDim'}`}>
+                                        Min. 8 characters {password.length >= 8 ? '✨' : ''}
+                                    </p>
+                                )}
                                 <button
                                     type="submit"
                                     className="w-full bg-genz-purple text-black py-4 rounded-2xl font-black uppercase tracking-wider hover:bg-genz-pink hover:scale-[1.02] transition-all duration-300 shadow-genz-purple-brutalist hover:shadow-genz-pink-brutalist active:translate-y-1 active:shadow-none"

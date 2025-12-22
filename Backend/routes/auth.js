@@ -13,12 +13,25 @@ router.post('/signup', async (req, res) => {
     try {
         const { email, username, password } = req.body;
 
-        let user = await User.findOne({ email });
-        if (user) return res.status(400).json({ message: "Email already exists" });
+        // Check for existing email or username
+        const existingUser = await User.findOne({
+            $or: [{ email }, { username }]
+        });
 
-        // Basic validation: prevent using password as username
+        if (existingUser) {
+            if (existingUser.email === email) {
+                return res.status(400).json({ message: "Email already exists" });
+            }
+            if (existingUser.username === username) {
+                return res.status(400).json({ message: "Username already exists" });
+            }
+        }
+
         if (!username || !password) {
             return res.status(400).json({ message: 'Username and password are required' });
+        }
+        if (password.length < 8) {
+            return res.status(400).json({ message: 'Password must be at least 8 characters long' });
         }
         if (String(username).trim() === String(password).trim()) {
             return res.status(400).json({ message: 'Username cannot be the same as the password' });

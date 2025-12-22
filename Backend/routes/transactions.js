@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const Transaction = require('../models/Transaction');
+const mongoose = require('mongoose');
 
 // Get all transactions for user
 router.get('/', auth, async (req, res) => {
@@ -59,6 +60,9 @@ router.post('/', auth, async (req, res) => {
 // Update transaction
 router.put('/:id', auth, async (req, res) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ message: 'Invalid ID format' });
+        }
         const tx = await Transaction.findOneAndUpdate(
             { _id: req.params.id, user: req.user },
             req.body,
@@ -75,6 +79,9 @@ router.put('/:id', auth, async (req, res) => {
 // Delete
 router.delete('/:id', auth, async (req, res) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ message: 'Invalid ID format' });
+        }
         await Transaction.findOneAndDelete({ _id: req.params.id, user: req.user });
         res.json({ success: true });
     } catch (err) {
