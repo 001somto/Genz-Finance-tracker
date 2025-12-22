@@ -906,18 +906,18 @@ const App = () => {
                                         required
                                     />
                                 )}
-                                <div className="relative group bg-black/50 rounded-2xl border-2 border-genz-card focus-within:border-genz-aqua focus-within:shadow-[0_0_15px_rgba(92,196,246,0.3)] transition-all">
+                                <div className="relative group bg-black/50 rounded-2xl border-2 border-genz-card focus-within:border-genz-aqua focus-within:shadow-[0_0_15px_rgba(92,196,246,0.3)] transition-all overflow-hidden">
                                     {/* Persistent Ghost Dots (Always visible for guidance) */}
-                                    <div className="absolute left-5 right-5 top-0 bottom-0 pointer-events-none flex items-center font-mono text-2xl tracking-[0.3em] select-none z-0">
+                                    <div className="absolute left-5 right-5 top-0 bottom-0 pointer-events-none flex items-center font-mono text-2xl tracking-widest select-none z-0">
                                         <span className="text-white/50">
-                                            {"•".repeat(Math.max(8, password.length))}
+                                            {"•".repeat(8)}
                                         </span>
                                     </div>
                                     <input
                                         type={showPassword ? "text" : "password"}
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="w-full bg-transparent text-white rounded-2xl px-5 py-4 focus:outline-none font-mono text-2xl tracking-[0.3em] relative z-10"
+                                        className="w-full bg-transparent text-white rounded-2xl px-5 py-4 focus:outline-none font-mono text-2xl tracking-widest relative z-10"
                                         required
                                     />
                                     <button
