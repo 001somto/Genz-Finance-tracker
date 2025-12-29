@@ -1638,6 +1638,17 @@ const App = () => {
                                             </div>
                                         )}
 
+                                        {/* Badge 6: Dedicated (30 Days Streak) */}
+                                        {getStreak() >= 30 && (
+                                            <div className="bg-gradient-to-br from-purple-500/20 to-fuchsia-500/20 border border-purple-500/30 p-2 rounded-xl flex items-center gap-2 group hover:scale-105 transition-all cursor-default">
+                                                <span className="text-2xl drop-shadow-lg">🗓️</span>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded uppercase font-bold w-fit">Dedicated</span>
+                                                    <span className="text-xs font-bold text-white">30 Days Active</span>
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {/* Locked Badge (Level 5) */}
                                         {level < 5 && (
                                             <div className="bg-black/20 border border-white/5 p-2 rounded-xl flex items-center gap-2 opacity-50 grayscale">
