@@ -12,7 +12,8 @@ const allowedOrigins = [
 	'http://127.0.0.1:5173',
 	'https://spendsave.obs.af-south-1.myhuaweicloud.com', // Huawei Cloud OBS (HTTPS)
 	'http://spendsave.obs.af-south-1.myhuaweicloud.com', // Huawei Cloud OBS (HTTP)
-	'http://spendsave.ralf.com.ng' // Custom Domain (No SSL)
+	'http://spendsave.ralf.com.ng', // Custom Domain (No SSL)
+	'https://spendsave.ralf.com.ng' // Custom Domain (SSL)
 ];
 
 app.use(cors({
