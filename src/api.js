@@ -5,7 +5,7 @@ const API_BASE =
   "https://genz-finance-tracker.onrender.com";
 
 async function request(path, options = {}) {
-  const token = localStorage.getItem("spendsave_token");
+  const token = sessionStorage.getItem("spendsave_token");
 
   const headers = {
     "Content-Type": "application/json",

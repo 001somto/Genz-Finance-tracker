@@ -135,6 +135,7 @@ const Icons = {
     ArrowLeft: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
     Eye: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>,
     EyeOff: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88L4.573 4.574m14.853 14.853l-2.356-2.356m2.356 2.356L22 22m-4.72-4.72A9.953 9.953 0 0021.542 12c-1.274-4.057-5.064-7-9.542-7-1.274 0-2.435.215-3.513.606m0 0l2.353 2.353" /></svg>,
+    Spinner: () => <svg className="animate-spin h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>,
 };
 
 // CATEGORIES
@@ -143,18 +144,27 @@ const EXPENSE_CATEGORIES = [
     { name: 'Food', emoji: '🍕' },
     { name: 'Groceries', emoji: '🛒' },
     { name: 'Travel', emoji: '✈️' },
+    { name: 'Entertainment', emoji: '🎟️' },
     { name: 'Commute', emoji: '🚌' },
     { name: 'Subscription', emoji: '📱' },
     { name: 'Airtime', emoji: '📞' },
     { name: 'Shopping', emoji: '🛍️' },
+    { name: 'Utilities', emoji: '💡' },
+    { name: 'Healthcare', emoji: '🏥' },
+    { name: 'Debt', emoji: '💳' },
+    { name: 'Tax', emoji: '💸' },
     { name: 'Gift', emoji: '🎁' },
+    { name: 'Cash Withdrawal', emoji: '🏧' },
     { name: 'Misc', emoji: '📦' },
 ];
 
 const INCOME_CATEGORIES = [
     { name: 'Salary', emoji: '💰' },
     { name: 'Freelance', emoji: '💼' },
+    { name: 'Investments', emoji: '📈' },
+    { name: 'Assets', emoji: '💎' },
     { name: 'Gift', emoji: '🎁' },
+    { name: 'Pension', emoji: '🏦' },
     { name: 'Other', emoji: '💰' },
 ];
 
@@ -377,21 +387,10 @@ const App = () => {
     };
 
     // Centralized API error handler
+    // Centralized API error handler
     const handleApiError = (err, defaultMsg = 'Action failed') => {
         console.error('API Error:', err);
-        const isHttps = window.location.protocol === 'https:';
-        // "Failed to fetch" is the standard message for network/CORS issues in browsers
-        const isFetchError = err.message?.toLowerCase().includes('failed to fetch') || err instanceof TypeError;
-
-        if (isHttps && isFetchError) {
-            showNotification(
-                "Connection Failed! 🚨\nYou're using a secure (HTTPS) link, but the backend server might only support HTTP.\n\nPlease try changing the URL to 'http://' in your browser to fix this!",
-                'error',
-                8000
-            );
-        } else {
-            showNotification(err.body?.message || err.message || defaultMsg, 'error', 4000);
-        }
+        showNotification(err.body?.message || err.message || defaultMsg, 'error', 4000);
     };
 
     // Auth state 
@@ -407,6 +406,32 @@ const App = () => {
     const [category, setCategory] = useState('');
     const [customCategory, setCustomCategory] = useState('');
     const [note, setNote] = useState('');
+    const [isLoading, setIsLoading] = useState(false); // NEW: Loading state
+
+    // GAMIFICATION STATE
+    const [xp, setXp] = useState(0);
+    const [showLevelUp, setShowLevelUp] = useState(false);
+    const level = Math.floor(xp / 100) + 1;
+    const xpForNextLevel = 100;
+    const currentLevelProgress = xp % 100;
+
+    const gainXp = (amount) => {
+        const currentLevel = Math.floor(xp / 100) + 1;
+        const newXp = xp + amount;
+        const newLevel = Math.floor(newXp / 100) + 1;
+
+        setXp(newXp);
+        localStorage.setItem('spendsave_xp', newXp.toString());
+
+        if (newLevel > currentLevel) {
+            setShowLevelUp(true);
+            setShowConfetti(true);
+            setTimeout(() => {
+                setShowLevelUp(false);
+                setShowConfetti(false);
+            }, 5000);
+        }
+    };
 
     // load user from localStorage (token) and fetch transactions
     useEffect(() => {
@@ -422,8 +447,14 @@ const App = () => {
             setSavingsGoals(JSON.parse(savedSavings));
         }
 
-        const savedUser = localStorage.getItem('spendsave_user');
-        const token = localStorage.getItem('spendsave_token');
+        // Load XP
+        const savedXp = localStorage.getItem('spendsave_xp');
+        if (savedXp) {
+            setXp(parseInt(savedXp, 10));
+        }
+
+        const savedUser = sessionStorage.getItem('spendsave_user');
+        const token = sessionStorage.getItem('spendsave_token');
 
         if (savedUser && token) {
             setUser(JSON.parse(savedUser));
@@ -444,8 +475,8 @@ const App = () => {
                     handleApiError(err, 'Failed to fetch transactions');
                     // if token invalid, clear and force login
                     if (err.status === 401) {
-                        localStorage.removeItem('spendsave_token');
-                        localStorage.removeItem('spendsave_user');
+                        sessionStorage.removeItem('spendsave_token');
+                        sessionStorage.removeItem('spendsave_user');
                         setUser(null);
                         setCurrentPage('login');
                     }
@@ -470,6 +501,7 @@ const App = () => {
             }
         }
 
+        setIsLoading(true); // START LOADING
         try {
             let res;
             if (authMode === 'signup') {
@@ -487,10 +519,10 @@ const App = () => {
 
             // res: { token, user }
             if (res && res.token) {
-                localStorage.setItem('spendsave_token', res.token);
+                sessionStorage.setItem('spendsave_token', res.token);
             }
             // FIX: Ensure the user object being saved to storage/state contains username
-            localStorage.setItem('spendsave_user', JSON.stringify(res.user));
+            sessionStorage.setItem('spendsave_user', JSON.stringify(res.user));
             setUser(res.user);
             setCurrentPage('dashboard');
 
@@ -510,15 +542,50 @@ const App = () => {
 
         } catch (err) {
             handleApiError(err, 'Authentication failed');
+        } finally {
+            setIsLoading(false); // STOP LOADING
         }
     };
 
     const handleLogout = () => {
-        localStorage.removeItem('spendsave_token');
-        localStorage.removeItem('spendsave_user');
+        sessionStorage.removeItem('spendsave_token');
+        sessionStorage.removeItem('spendsave_user');
         setUser(null);
         setCurrentPage('login');
     };
+
+    // --- INACTIVITY TIMER ---
+    useEffect(() => {
+        const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutes
+        let timeoutId;
+
+        const resetTimer = () => {
+            if (timeoutId) clearTimeout(timeoutId);
+            if (user) { // Only run timer if user is logged in
+                timeoutId = setTimeout(() => {
+                    handleLogout();
+                    showNotification("Logged out due to inactivity 💤", "info");
+                }, INACTIVITY_LIMIT);
+            }
+        };
+
+        // Listeners for user activity
+        window.addEventListener('mousemove', resetTimer);
+        window.addEventListener('keydown', resetTimer);
+        window.addEventListener('click', resetTimer);
+        window.addEventListener('scroll', resetTimer);
+
+        // Init timer
+        resetTimer();
+
+        return () => {
+            if (timeoutId) clearTimeout(timeoutId);
+            window.removeEventListener('mousemove', resetTimer);
+            window.removeEventListener('keydown', resetTimer);
+            window.removeEventListener('click', resetTimer);
+            window.removeEventListener('scroll', resetTimer);
+        };
+    }, [user]); // Re-run when user logs in/out
 
     // --- BUDGET HANDLERS ---
     const handleAddBudget = (e) => {
@@ -544,6 +611,9 @@ const App = () => {
         setShowBudgetModal(false);
         setBudgetCategory('');
         setBudgetAmount('');
+
+        gainXp(50); // +50 XP for creating a budget
+        showNotification("Budget created! +50 XP", "success");
     };
 
     const handleDeleteBudget = (id) => {
@@ -584,6 +654,9 @@ const App = () => {
         setShowSavingsModal(false);
         setSavingsCategory('');
         setSavingsAmount('');
+
+        gainXp(50); // +50 XP for creating a savings goal
+        showNotification("Savings Goal created! +50 XP", "success");
     };
 
     const handleDeleteSavingsGoal = (id) => {
@@ -614,6 +687,8 @@ const App = () => {
             note,
             createdAt: new Date().toISOString()
         };
+
+        setIsLoading(true); // Start Loading
         try {
             let updatedTxs;
 
@@ -651,6 +726,11 @@ const App = () => {
                     : 'Transaction added successfully!',
                 'success'
             );
+
+            // GAMIFICATION: Award XP
+            if (!editingTransaction) {
+                gainXp(10); // +10 XP for new transaction
+            }
 
             // NEW: Check for budget overspending
             if (transactionType === 'expense') {
@@ -691,6 +771,7 @@ const App = () => {
 
                         setTimeout(() => {
                             showNotification(`Congratulations!\n\nYou've reached your savings goal for ${finalCategory}!\nGoal: ₦${savingGoal.amount.toLocaleString()}\nSaved: ₦${newTotal.toLocaleString()}`, 'success', 6000);
+                            gainXp(100); // +100 XP for hitting a goal
                         }, 500);
                     }
                 }
@@ -702,6 +783,8 @@ const App = () => {
             } else {
                 handleApiError(err, "Transaction failed");
             }
+        } finally {
+            setIsLoading(false); // Stop Loading
         }
     };
 
@@ -937,9 +1020,10 @@ const App = () => {
                                 )}
                                 <button
                                     type="submit"
-                                    className="w-full bg-genz-purple text-black py-4 rounded-2xl font-black uppercase tracking-wider hover:bg-genz-pink hover:scale-[1.02] transition-all duration-300 shadow-genz-purple-brutalist hover:shadow-genz-pink-brutalist active:translate-y-1 active:shadow-none"
+                                    disabled={isLoading}
+                                    className={`w-full bg-genz-purple text-black py-4 rounded-2xl font-black uppercase tracking-wider hover:bg-genz-pink hover:scale-[1.02] transition-all duration-300 shadow-genz-purple-brutalist hover:shadow-genz-pink-brutalist active:translate-y-1 active:shadow-none ${isLoading ? 'opacity-70 cursor-wait flex items-center justify-center gap-2' : ''}`}
                                 >
-                                    {authMode === 'login' ? "Let's Go" : 'Create Account'}
+                                    {isLoading ? <><Icons.Spinner /> Loading...</> : (authMode === 'login' ? "Let's Go" : 'Create Account')}
                                 </button>
                             </form>
                         </div>
@@ -1101,7 +1185,9 @@ const App = () => {
                                             type="button"
                                             onClick={() => setCategory(cat.name)}
                                             className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${category === cat.name
-                                                ? 'bg-black/50 border-genz-aqua shadow-[0_0_15px_rgba(92,196,246,0.3)]'
+                                                ? (transactionType === 'expense'
+                                                    ? 'bg-black/50 border-genz-pink shadow-[0_0_15px_rgba(215,122,168,0.3)]'
+                                                    : 'bg-black/50 border-genz-aqua shadow-[0_0_15px_rgba(92,196,246,0.3)]')
                                                 : 'bg-genz-card/50 border-genz-card hover:border-genz-textDim/50'
                                                 }`}
                                         >
@@ -1136,9 +1222,10 @@ const App = () => {
 
                             <button
                                 type="submit"
-                                className="w-full bg-genz-aqua text-black py-5 rounded-2xl font-black hover:bg-genz-purple transition-all shadow-genz-purple-brutalist active:translate-y-1 active:shadow-none"
+                                disabled={isLoading}
+                                className={`w-full bg-genz-aqua text-black py-5 rounded-2xl font-black hover:bg-genz-purple transition-all shadow-genz-purple-brutalist active:translate-y-1 active:shadow-none flex items-center justify-center gap-2 ${isLoading ? 'opacity-70 cursor-wait' : ''}`}
                             >
-                                {editingTransaction ? 'Save Changes' : 'Add Transaction'}
+                                {isLoading ? <><Icons.Spinner /> {editingTransaction ? 'Saving...' : 'Adding...'}</> : (editingTransaction ? 'Save Changes' : 'Add Transaction')}
                             </button>
                         </form>
                     </div>
@@ -1354,7 +1441,21 @@ const App = () => {
                                 {user.username ? user.username[0].toUpperCase() : 'U'}
                             </div>
                             <h2 className="text-3xl font-black mb-1 text-genz-aqua">{user.username || 'User'}</h2>
-                            <p className="text-genz-textDim font-mono text-xl mb-4">{user.email || 'No Email'}</p>
+                            <p className="text-genz-textDim font-mono text-sm sm:text-xl mb-4 break-all px-4">{user.email || 'No Email'}</p>
+
+                            {/* LEVEL & XP */}
+                            <div className="mt-6 mb-2 px-4">
+                                <div className="flex justify-between items-end mb-2">
+                                    <span className="text-genz-aqua font-black text-lg uppercase tracking-widest">Level {level}</span>
+                                    <span className="text-xs text-genz-textDim font-bold">{currentLevelProgress} / {xpForNextLevel} XP</span>
+                                </div>
+                                <div className="w-full h-3 bg-black/40 rounded-full overflow-hidden border border-white/10 relative">
+                                    <div
+                                        className="h-full bg-gradient-to-r from-genz-purple to-genz-pink transition-all duration-1000 ease-out"
+                                        style={{ width: `${currentLevelProgress}%` }}
+                                    ></div>
+                                </div>
+                            </div>
 
                             <div className="mt-8 pt-4 border-t border-genz-borderDark/50">
                                 {/* Monthly Targets Section */}
@@ -1482,7 +1583,7 @@ const App = () => {
                                 <div className="pt-6 border-t border-genz-borderDark/50 mt-6 text-left">
                                     <span className="text-genz-textDim text-sm font-bold uppercase tracking-wider mb-4 block">Achievements 🏆</span>
                                     <div className="flex gap-3 flex-wrap">
-                                        {/* Badge 1: Early Bird (First Transaction) */}
+                                        {/* Badge 1: Starter */}
                                         {transactions.length > 0 && (
                                             <div className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 p-2 rounded-xl flex items-center gap-2 group hover:scale-105 transition-all cursor-default">
                                                 <span className="text-2xl drop-shadow-lg">🌟</span>
@@ -1493,18 +1594,40 @@ const App = () => {
                                             </div>
                                         )}
 
-                                        {/* Badge 2: Streak Master (Streak > 3) */}
-                                        {getStreak() > 3 && (
-                                            <div className="bg-gradient-to-br from-red-500/20 to-pink-500/20 border border-red-500/30 p-2 rounded-xl flex items-center gap-2 group hover:scale-105 transition-all cursor-default">
-                                                <span className="text-2xl drop-shadow-lg">🔥</span>
+                                        {/* Badge 2: Night Owl (Transaction after 10PM) */}
+                                        {transactions.some(t => new Date(t.createdAt).getHours() >= 22) && (
+                                            <div className="bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 p-2 rounded-xl flex items-center gap-2 group hover:scale-105 transition-all cursor-default">
+                                                <span className="text-2xl drop-shadow-lg">🦉</span>
                                                 <div className="flex flex-col">
-                                                    <span className="text-[10px] bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded uppercase font-bold w-fit">Hot</span>
-                                                    <span className="text-xs font-bold text-white">On Fire!</span>
+                                                    <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded uppercase font-bold w-fit">Night Owl</span>
+                                                    <span className="text-xs font-bold text-white">Late Spender</span>
                                                 </div>
                                             </div>
                                         )}
 
-                                        {/* Badge 3: Goal Crusher (Completed a Savings Goal) */}
+                                        {/* Badge 3: Big Spender (> 50k) */}
+                                        {transactions.some(t => t.type === 'expense' && t.amount >= 50000) && (
+                                            <div className="bg-gradient-to-br from-pink-500/20 to-rose-500/20 border border-pink-500/30 p-2 rounded-xl flex items-center gap-2 group hover:scale-105 transition-all cursor-default">
+                                                <span className="text-2xl drop-shadow-lg">💸</span>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] bg-pink-500/20 text-pink-300 px-1.5 py-0.5 rounded uppercase font-bold w-fit">Whale</span>
+                                                    <span className="text-xs font-bold text-white">Big Spender</span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Badge 4: Penny Pincher (< 1k) */}
+                                        {transactions.some(t => t.type === 'expense' && t.amount < 1000) && (
+                                            <div className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-cyan-500/30 p-2 rounded-xl flex items-center gap-2 group hover:scale-105 transition-all cursor-default">
+                                                <span className="text-2xl drop-shadow-lg">🪙</span>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] bg-cyan-500/20 text-cyan-300 px-1.5 py-0.5 rounded uppercase font-bold w-fit">Thrifty</span>
+                                                    <span className="text-xs font-bold text-white">Penny Pincher</span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Badge 5: Goal Crusher */}
                                         {savingsGoals.some(g => calculateSavingsProgress(g.category) >= g.amount) && (
                                             <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 p-2 rounded-xl flex items-center gap-2 group hover:scale-105 transition-all cursor-default">
                                                 <span className="text-2xl drop-shadow-lg">💎</span>
@@ -1515,13 +1638,13 @@ const App = () => {
                                             </div>
                                         )}
 
-                                        {/* Placeholder Badge (Locked) */}
-                                        {getStreak() < 30 && (
+                                        {/* Locked Badge (Level 5) */}
+                                        {level < 5 && (
                                             <div className="bg-black/20 border border-white/5 p-2 rounded-xl flex items-center gap-2 opacity-50 grayscale">
                                                 <span className="text-2xl">👑</span>
                                                 <div className="flex flex-col">
-                                                    <span className="text-[10px] bg-white/10 text-genz-textDim px-1.5 py-0.5 rounded uppercase font-bold w-fit">Locked</span>
-                                                    <span className="text-xs font-bold text-genz-textDim">Monthly King</span>
+                                                    <span className="text-[10px] bg-white/10 text-genz-textDim px-1.5 py-0.5 rounded uppercase font-bold w-fit">PxLocked</span>
+                                                    <span className="text-xs font-bold text-genz-textDim">Level 5</span>
                                                 </div>
                                             </div>
                                         )}
@@ -1537,6 +1660,21 @@ const App = () => {
                         >
                             Log Out
                         </button>
+
+                        {/* LEVEL UP MODAL */}
+                        {showLevelUp && (
+                            <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
+                                <div className="bg-gradient-to-br from-yellow-400 to-orange-500 p-1 rounded-[2rem] animate-in zoom-in duration-500 shadow-[0_0_100px_rgba(255,165,0,0.5)]">
+                                    <div className="bg-black/90 backdrop-blur-xl rounded-[1.9rem] p-8 text-center border border-yellow-500/50 relative overflow-hidden">
+                                        <div className="absolute inset-0 bg-yellow-500/10 animate-pulse"></div>
+                                        <h2 className="text-5xl mb-2 animate-bounce">🆙</h2>
+                                        <h3 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-400 uppercase italic">Level Up!</h3>
+                                        <p className="text-white font-bold text-lg mt-2">You are now Level {level}!</p>
+                                        <p className="text-yellow-200/80 text-sm font-mono mt-1">Keep crushing your goals! 🚀</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Add Budget Modal */}
                         {showBudgetModal && (
