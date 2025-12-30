@@ -63,3 +63,30 @@ export const updateTransaction = (id, tx) =>
 
 export const deleteTransaction = (id) =>
   request(`/api/transactions/${id}`, { method: "DELETE" });
+
+// Budget API
+export const getBudgets = () =>
+  request("/api/budgets", { method: "GET" });
+
+export const createBudget = (budget) =>
+  request("/api/budgets", {
+    method: "POST",
+    body: JSON.stringify(budget),
+  });
+
+export const deleteBudget = (id) =>
+  request(`/api/budgets/${id}`, { method: "DELETE" });
+
+// Savings Goals API
+export const getSavingsGoals = () =>
+  request("/api/savings", { method: "GET" });
+
+export const createSavingsGoal = (goal) =>
+  request("/api/savings", {
+    method: "POST",
+    body: JSON.stringify(goal),
+  });
+
+export const deleteSavingsGoal = (id) =>
+  request(`/api/savings/${id}`, { method: "DELETE" });
+

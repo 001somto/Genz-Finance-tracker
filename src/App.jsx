@@ -1,5 +1,5 @@
 import './App.css'
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import * as api from './api';
 
@@ -54,14 +54,14 @@ body {
     width: 8px;
 }
 ::-webkit-scrollbar-track {
-    background: ${GENZ_COLORS.bgDark}; 
+    background: ${GENZ_COLORS.bgDark};
 }
 ::-webkit-scrollbar-thumb {
-    background: ${GENZ_COLORS.cardDark}; 
+    background: ${GENZ_COLORS.cardDark};
     border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: ${GENZ_COLORS.pink}; 
+    background: ${GENZ_COLORS.pink};
 }
 
 /* Notification Animation */
@@ -83,13 +83,13 @@ body {
 /* Pop-in for centered notifications - Simplified to scale only */
 @keyframes pop-in {
     from {
-        transform: scale(0.9);
-        opacity: 0;
-    }
+    transform: scale(0.9);
+    opacity: 0;
+}
     to {
-        transform: scale(1);
-        opacity: 1;
-    }
+    transform: scale(1);
+    opacity: 1;
+}
 }
 
 .animate-pop-in {
@@ -114,10 +114,10 @@ body {
 
 /* FIX: Force Autofill background to match dark theme */
 input:-webkit-autofill,
-input:-webkit-autofill:hover, 
-input:-webkit-autofill:focus, 
-input:-webkit-autofill:active{
-    -webkit-box-shadow: 0 0 0 30px ${GENZ_COLORS.cardDark} inset !important;
+    input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+            input:-webkit-autofill:active{
+    -webkit-box-shadow: 0 0 0 30px ${GENZ_COLORS.cardDark} inset!important;
     -webkit-text-fill-color: ${GENZ_COLORS.textLight} !important;
     caret-color: ${GENZ_COLORS.textLight} !important;
     transition: background-color 5000s ease-in-out 0s;
@@ -136,6 +136,125 @@ const Icons = {
     Eye: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>,
     EyeOff: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88L4.573 4.574m14.853 14.853l-2.356-2.356m2.356 2.356L22 22m-4.72-4.72A9.953 9.953 0 0021.542 12c-1.274-4.057-5.064-7-9.542-7-1.274 0-2.435.215-3.513.606m0 0l2.353 2.353" /></svg>,
     Spinner: () => <svg className="animate-spin h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>,
+    ChevronLeft: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>,
+    ChevronRight: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>,
+    Lock: ({ size = 20, className = "" }) => (
+        <svg
+            width={size}
+            height={size}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={className}
+        >
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+    ),
+};
+
+// --- MINI CALENDAR COMPONENT ---
+const MiniCalendar = ({ startDate, endDate, onSelectRange, accentColor = 'genz-aqua' }) => {
+    const [viewDate, setViewDate] = useState(new Date(startDate || new Date()));
+
+    // Shorter month names for mobile
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    const daysInMonth = (month, year) => new Date(year, month + 1, 0).getDate();
+    const firstDayOfMonth = (month, year) => new Date(year, month, 1).getDay();
+
+    const prevMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
+    const nextMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
+
+    const month = viewDate.getMonth();
+    const year = viewDate.getFullYear();
+    const totalDays = daysInMonth(month, year);
+    const startDay = firstDayOfMonth(month, year);
+
+    const days = [];
+    for (let i = 0; i < startDay; i++) days.push(null);
+    for (let i = 1; i <= totalDays; i++) days.push(i);
+
+    const handleDayClick = (day) => {
+        if (!day) return;
+        const clickedDateStr = new Date(year, month, day).toISOString().split('T')[0];
+
+        if (!startDate || clickedDateStr < startDate || (startDate && endDate)) {
+            onSelectRange(clickedDateStr, null);
+        } else if (clickedDateStr === startDate) {
+            onSelectRange(null, null);
+        } else {
+            onSelectRange(startDate, clickedDateStr);
+        }
+    };
+
+    const isStart = (day) => {
+        if (!day) return false;
+        const dStr = new Date(year, month, day).toISOString().split('T')[0];
+        return dStr === startDate;
+    };
+
+    const isEnd = (day) => {
+        if (!day) return false;
+        const dStr = new Date(year, month, day).toISOString().split('T')[0];
+        return dStr === endDate;
+    };
+
+    const isInRange = (day) => {
+        if (!day || !startDate || !endDate) return false;
+        const dStr = new Date(year, month, day).toISOString().split('T')[0];
+        return dStr > startDate && dStr < endDate;
+    };
+
+    return (
+        <div className="bg-genz-dark rounded-xl p-3 border border-genz-borderDark shadow-inner">
+            <div className="flex justify-between items-center mb-3">
+                <button type="button" onClick={prevMonth} className="p-1 hover:bg-genz-borderDark rounded-lg text-white transition-colors">
+                    <Icons.ChevronLeft />
+                </button>
+                <span className="font-bold text-white text-[10px] uppercase tracking-widest">
+                    {monthNames[month]} {year}
+                </span>
+                <button type="button" onClick={nextMonth} className="p-1 hover:bg-genz-borderDark rounded-lg text-white transition-colors">
+                    <Icons.ChevronRight />
+                </button>
+            </div>
+
+            <div className="grid grid-cols-7 gap-1 text-center mb-1">
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+                    <span key={`${d}-${i}`} className="text-[9px] font-black text-genz-textDim">{d}</span>
+                ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-0.5">
+                {days.map((day, idx) => {
+                    const active = isStart(day) || isEnd(day);
+                    const range = isInRange(day);
+
+                    return (
+                        <button
+                            key={idx}
+                            type="button"
+                            disabled={!day}
+                            onClick={() => handleDayClick(day)}
+                            className={`
+                                aspect-square text-[9px] font-bold rounded-lg transition-all flex items-center justify-center
+                                ${!day ? 'invisible' : ''}
+                                ${active ? `bg-${accentColor} text-white scale-105 shadow-md shadow-${accentColor}/40 z-10` :
+                                    range ? `bg-${accentColor}/20 text-${accentColor}` : 'text-genz-textDim hover:bg-genz-borderDark hover:text-white'
+                                }
+                            `}
+                        >
+                            {day}
+                        </button>
+                    );
+                })}
+            </div>
+        </div>
+    );
 };
 
 // CATEGORIES
@@ -168,20 +287,120 @@ const INCOME_CATEGORIES = [
     { name: 'Other', emoji: '💰' },
 ];
 
+// ACHIEVEMENTS
+const ACHIEVEMENTS = [
+    {
+        id: 'starter',
+        icon: '🌟',
+        title: 'Starter',
+        subtitle: 'First Step',
+        bgGradient: 'from-yellow-500/20 to-orange-500/20',
+        borderColor: 'border-yellow-500/30',
+        badgeBg: 'bg-yellow-500/20',
+        badgeText: 'text-yellow-300',
+        description: 'Welcome to SpendSave! You took your first step towards financial freedom.',
+        howToUnlock: 'Add your first transaction to unlock this achievement.',
+    },
+    {
+        id: 'night_owl',
+        icon: '🦉',
+        title: 'Night Owl',
+        subtitle: 'Late Spender',
+        bgGradient: 'from-indigo-500/20 to-purple-500/20',
+        borderColor: 'border-indigo-500/30',
+        badgeBg: 'bg-indigo-500/20',
+        badgeText: 'text-indigo-300',
+        description: 'You logged a transaction after 10 PM. Burning the midnight oil?',
+        howToUnlock: 'Log a transaction after 10:00 PM to unlock this achievement.',
+    },
+    {
+        id: 'big_spender',
+        icon: '💸',
+        title: 'Whale',
+        subtitle: 'Big Spender',
+        bgGradient: 'from-pink-500/20 to-rose-500/20',
+        borderColor: 'border-pink-500/30',
+        badgeBg: 'bg-pink-500/20',
+        badgeText: 'text-pink-300',
+        description: 'You made a single expense of ₦50,000 or more. That\'s a big move!',
+        howToUnlock: 'Log an expense of ₦50,000 or more in one transaction.',
+    },
+    {
+        id: 'penny_pincher',
+        icon: '🪙',
+        title: 'Thrifty',
+        subtitle: 'Penny Pincher',
+        bgGradient: 'from-blue-500/20 to-cyan-500/20',
+        borderColor: 'border-cyan-500/30',
+        badgeBg: 'bg-cyan-500/20',
+        badgeText: 'text-cyan-300',
+        description: 'You logged an expense under ₦1,000. Every naira counts!',
+        howToUnlock: 'Log an expense less than ₦1,000 to unlock this achievement.',
+    },
+    {
+        id: 'goal_crusher',
+        icon: '💎',
+        title: 'Rich',
+        subtitle: 'Goal Crusher',
+        bgGradient: 'from-green-500/20 to-emerald-500/20',
+        borderColor: 'border-green-500/30',
+        badgeBg: 'bg-green-500/20',
+        badgeText: 'text-green-300',
+        description: 'You reached one of your savings goals. Keep crushing it!',
+        howToUnlock: 'Set a savings goal and reach it by logging income transactions.',
+    },
+    {
+        id: 'dedicated',
+        icon: '🗓️',
+        title: 'Dedicated',
+        subtitle: '30 Days Active',
+        bgGradient: 'from-purple-500/20 to-fuchsia-500/20',
+        borderColor: 'border-purple-500/30',
+        badgeBg: 'bg-purple-500/20',
+        badgeText: 'text-purple-300',
+        description: 'You\'ve been active for 30 unique days! Your consistency is impressive.',
+        howToUnlock: 'Log transactions on 30 different days to unlock this achievement.',
+    },
+    {
+        id: 'budget_master',
+        icon: '🎯',
+        title: 'Budget Master',
+        subtitle: 'On Track',
+        bgGradient: 'from-amber-500/20 to-yellow-500/20',
+        borderColor: 'border-amber-500/30',
+        badgeBg: 'bg-amber-500/20',
+        badgeText: 'text-amber-300',
+        description: 'You stayed within your budget target! Financial discipline at its finest.',
+        howToUnlock: 'Set a budget target and keep your spending below it.',
+    },
+    {
+        id: 'level_5',
+        icon: '👑',
+        title: 'Locked',
+        subtitle: 'Level 5',
+        bgGradient: 'from-black/20 to-black/20',
+        borderColor: 'border-white/5',
+        badgeBg: 'bg-white/10',
+        badgeText: 'text-genz-textDim',
+        description: 'Reach Level 5 to unlock this exclusive achievement!',
+        howToUnlock: 'Earn enough XP to reach Level 5.',
+    },
+];
+
 // --- CategoryLegend for Analytics (Compact 2-column for all devices) ---
 const CategoryLegend = ({ data, highlightName }) => (
     <div className="mt-8 grid grid-cols-2 gap-x-2 gap-y-3 text-[11px] sm:text-sm">
         {data.map((entry, index) => (
             <div
-                key={`legend-${index}`}
-                className={`flex items-center gap-1.5 transition-all overflow-hidden ${entry.name === highlightName ? 'bg-genz-dark/50 p-1.5 rounded-xl border border-genz-pink/50 shadow-lg' : ''}`}
+                key={`legend - ${index} `}
+                className={`flex items - center gap - 1.5 transition - all overflow - hidden ${entry.name === highlightName ? 'bg-genz-dark/50 p-1.5 rounded-xl border border-genz-pink/50 shadow-lg' : ''} `}
             >
                 <div
                     className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                     style={{ backgroundColor: COLORS[index % COLORS.length] }}
                 />
                 <span className="text-genz-textDim flex-shrink-0">{entry.emoji}</span>
-                <span className={`font-medium flex-1 truncate ${entry.name === highlightName ? 'text-genz-pink' : 'text-genz-textLight'}`}>
+                <span className={`font - medium flex - 1 truncate ${entry.name === highlightName ? 'text-genz-pink' : 'text-genz-textLight'} `}>
                     {entry.name}
                 </span>
                 <span className="text-genz-textDim font-mono text-[10px] flex-shrink-0 ml-auto">
@@ -203,12 +422,12 @@ const Confetti = () => {
                     key={i}
                     className="absolute top-[-20px] animate-fall"
                     style={{
-                        left: `${Math.random() * 100}vw`,
-                        animationDuration: `${Math.random() * 3 + 2}s`,
-                        animationDelay: `${Math.random() * 2}s`,
+                        left: `${Math.random() * 100} vw`,
+                        animationDuration: `${Math.random() * 3 + 2} s`,
+                        animationDelay: `${Math.random() * 2} s`,
                         backgroundColor: colors[Math.floor(Math.random() * colors.length)],
-                        width: `${Math.random() * 10 + 5}px`,
-                        height: `${Math.random() * 10 + 5}px`,
+                        width: `${Math.random() * 10 + 5} px`,
+                        height: `${Math.random() * 10 + 5} px`,
                         transform: `rotate(${Math.random() * 360}deg)`,
                     }}
                 />
@@ -223,10 +442,10 @@ const Confetti = () => {
 // --- CUSTOM NOTIFICATION COMPONENT ---
 const Notification = ({ message, type = 'info', onClose }) => {
     const typeStyles = {
-        success: 'bg-gradient-to-r from-emerald-400 to-cyan-400 text-white border-emerald-300 shadow-[0_0_30px_rgba(52,211,153,0.4)]',
-        error: 'bg-gradient-to-r from-rose-500 to-pink-500 text-white border-rose-400 shadow-[0_0_30px_rgba(244,63,94,0.4)]',
-        warning: 'bg-gradient-to-r from-amber-400 to-orange-400 text-white border-amber-300 shadow-[0_0_30px_rgba(251,191,36,0.4)]',
-        info: 'bg-gradient-to-r from-violet-500 to-purple-500 text-white border-violet-400 shadow-[0_0_30px_rgba(139,92,246,0.4)]',
+        success: 'bg-genz-card/90 border-emerald-500/50 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.1)]',
+        error: 'bg-genz-card/90 border-rose-500/50 text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.1)]',
+        warning: 'bg-genz-card/90 border-amber-500/50 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.1)]',
+        info: 'bg-genz-card/90 border-indigo-500/50 text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.1)]',
     };
 
     const icons = {
@@ -237,13 +456,13 @@ const Notification = ({ message, type = 'info', onClose }) => {
     };
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center p-6 z-[250] pointer-events-none">
-            <div className={`${typeStyles[type]} pointer-events-auto rounded-2xl px-6 py-4 shadow-2xl border-2 flex items-center gap-3 w-full max-w-[320px] backdrop-blur-sm animate-pop-in`}>
+        <div className="fixed inset-0 flex items-start justify-center p-6 z-[250] pointer-events-none">
+            <div className={`${typeStyles[type]} pointer-events-auto rounded-2xl px-6 py-4 border-2 flex items-center gap-3 w-full max-w-[320px] backdrop-blur-sm animate-slide-down`}>
                 <span className="text-2xl">{icons[type]}</span>
                 <p className="font-bold text-sm flex-1 whitespace-pre-line drop-shadow-sm">{message}</p>
                 <button
                     onClick={onClose}
-                    className="text-white/80 hover:text-white font-bold text-xl leading-none transition-colors"
+                    className="opacity-80 hover:opacity-100 font-bold text-xl leading-none transition-colors"
                 >
                     ×
                 </button>
@@ -336,7 +555,7 @@ const Homepage = ({ onStart }) => {
                     {features.map((f, i) => (
                         <div
                             key={i}
-                            className={`${f.color} backdrop-blur-md border p-8 lg:p-10 rounded-[2rem] lg:rounded-[2.5rem] group hover:scale-[1.02] transition-all flex flex-col items-center`}
+                            className={`${f.color} backdrop - blur - md border p - 8 lg: p - 10 rounded - [2rem] lg: rounded - [2.5rem] group hover: scale - [1.02] transition - all flex flex - col items - center`}
                         >
                             <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-2xl flex items-center justify-center text-2xl lg:text-3xl mb-6 lg:mb-8 bg-black/40 group-hover:rotate-6 transition-transform shadow-lg">
                                 {f.emoji}
@@ -369,21 +588,47 @@ const App = () => {
     const [showBudgetModal, setShowBudgetModal] = useState(false);
     const [budgetCategory, setBudgetCategory] = useState('');
     const [budgetAmount, setBudgetAmount] = useState('');
+    const [budgetPeriod, setBudgetPeriod] = useState('weekly'); // 'weekly' or 'monthly'
+    const [budgetStartDate, setBudgetStartDate] = useState(new Date().toISOString().split('T')[0]);
+    const [budgetEndDate, setBudgetEndDate] = useState(() => {
+        const d = new Date();
+        d.setDate(d.getDate() + 7);
+        return d.toISOString().split('T')[0];
+    });
+    const [showCalendar, setShowCalendar] = useState(false);
 
     // --- SAVINGS GOALS STATE ---
     const [savingsGoals, setSavingsGoals] = useState([]);
     const [showSavingsModal, setShowSavingsModal] = useState(false);
     const [savingsCategory, setSavingsCategory] = useState('');
     const [savingsAmount, setSavingsAmount] = useState('');
+    const [savingsPeriod, setSavingsPeriod] = useState('monthly');
+    const [savingsStartDate, setSavingsStartDate] = useState(new Date().toISOString().split('T')[0]);
+    const [savingsEndDate, setSavingsEndDate] = useState(() => {
+        const d = new Date();
+        return new Date(d.getFullYear(), d.getMonth() + 1, d.getDate()).toISOString().split('T')[0];
+    });
+    const [showSavingsCalendar, setShowSavingsCalendar] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
+
+    // --- ACHIEVEMENT MODAL STATE ---
+    const [selectedAchievement, setSelectedAchievement] = useState(null);
+    const [unlockedAchievements, setUnlockedAchievements] = useState([]);
 
     // --- NOTIFICATION STATE ---
     const [notification, setNotification] = useState(null);
+    const notificationTimeoutRef = useRef(null);
 
     // Helper function to show notifications
     const showNotification = (message, type = 'info', duration = 3000) => {
+        // Clear any existing timer to prevent flickering or early clearing
+        if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
+
         setNotification({ message, type });
-        setTimeout(() => setNotification(null), duration);
+        notificationTimeoutRef.current = setTimeout(() => {
+            setNotification(null);
+            notificationTimeoutRef.current = null;
+        }, duration);
     };
 
     // Centralized API error handler
@@ -433,24 +678,18 @@ const App = () => {
         }
     };
 
-    // load user from localStorage (token) and fetch transactions
+    // 1. Initial Session Load
     useEffect(() => {
-        // Load Budgets
-        const savedBudgets = localStorage.getItem('spendsave_budgets');
-        if (savedBudgets) {
-            setBudgets(JSON.parse(savedBudgets));
-        }
-
-        // Load Savings Goals
-        const savedSavings = localStorage.getItem('spendsave_savings');
-        if (savedSavings) {
-            setSavingsGoals(JSON.parse(savedSavings));
-        }
-
         // Load XP
         const savedXp = localStorage.getItem('spendsave_xp');
-        if (savedXp) {
-            setXp(parseInt(savedXp, 10));
+        if (savedXp) setXp(parseInt(savedXp, 10));
+
+        // Load Achievements
+        const savedAchievements = localStorage.getItem('spendsave_achievements');
+        if (savedAchievements) {
+            try {
+                setUnlockedAchievements(JSON.parse(savedAchievements));
+            } catch (e) { console.error('Failed to parse achievements', e); }
         }
 
         const savedUser = sessionStorage.getItem('spendsave_user');
@@ -459,34 +698,90 @@ const App = () => {
         if (savedUser && token) {
             setUser(JSON.parse(savedUser));
             setCurrentPage('dashboard');
-
-            // fetch from backend
-            (async () => {
-                try {
-                    const txs = await api.getTransactions();
-                    // convert _id (from MongoDB) to id (what your UI uses)
-                    const normalized = txs.map(t => ({
-                        ...t,
-                        id: t._id || t.id, // Use _id from MongoDB if available
-                    }));
-
-                    setTransactions(normalized);
-                } catch (err) {
-                    handleApiError(err, 'Failed to fetch transactions');
-                    // if token invalid, clear and force login
-                    if (err.status === 401) {
-                        sessionStorage.removeItem('spendsave_token');
-                        sessionStorage.removeItem('spendsave_user');
-                        setUser(null);
-                        setCurrentPage('login');
-                    }
-                }
-            })();
         } else {
             // no token: clear any old local storage data
             localStorage.removeItem('spendsave_transactions');
         }
     }, []);
+
+    // 2. Data Fetching (Whenever user state changes)
+    useEffect(() => {
+        if (!user) {
+            setTransactions([]);
+            setBudgets([]);
+            setSavingsGoals([]);
+            return;
+        }
+
+        const fetchData = async () => {
+            try {
+                // Fetch all in parallel for speed
+                const [txs, fetchedBudgets, fetchedGoals] = await Promise.all([
+                    api.getTransactions(),
+                    api.getBudgets(),
+                    api.getSavingsGoals()
+                ]);
+
+                // Normalize transactions
+                const normalized = txs.map(t => ({
+                    ...t,
+                    id: t._id || t.id,
+                }));
+
+                setTransactions(normalized);
+                setBudgets(fetchedBudgets);
+                setSavingsGoals(fetchedGoals);
+            } catch (err) {
+                handleApiError(err, 'Failed to fetch data');
+                // if token invalid, clear and force login
+                if (err.status === 401) {
+                    sessionStorage.removeItem('spendsave_token');
+                    sessionStorage.removeItem('spendsave_user');
+                    setUser(null);
+                    setCurrentPage('login');
+                }
+            }
+        };
+
+        fetchData();
+    }, [user]);
+
+    // --- ACHIEVEMENT UNLOCK DETECTION ---
+    useEffect(() => {
+        // Check for newly unlocked achievements
+        const currentlyUnlocked = ACHIEVEMENTS.filter(a => isAchievementUnlocked(a.id)).map(a => a.id);
+
+        // Find newly unlocked achievements (not in previous list)
+        const newlyUnlocked = currentlyUnlocked.filter(id => !unlockedAchievements.includes(id));
+
+        if (newlyUnlocked.length > 0) {
+            // Update the list of unlocked achievements and persist
+            const nextUnlocked = [...unlockedAchievements, ...newlyUnlocked];
+            setUnlockedAchievements(nextUnlocked);
+            localStorage.setItem('spendsave_achievements', JSON.stringify(nextUnlocked));
+
+            // Celebrate each newly unlocked achievement
+            newlyUnlocked.forEach((achievementId, index) => {
+                const achievement = ACHIEVEMENTS.find(a => a.id === achievementId);
+                if (achievement) {
+                    // Delay each celebration slightly if multiple unlocked at once
+                    setTimeout(() => {
+                        setShowConfetti(true);
+                        setTimeout(() => setShowConfetti(false), 3000);
+
+                        showNotification(
+                            `🎉 Achievement Unlocked!\n\n${achievement.title} \n\n${achievement.description} `,
+                            'success',
+                            5000
+                        );
+
+                        // Award XP for unlocking achievement
+                        gainXp(25);
+                    }, index * 500);
+                }
+            });
+        }
+    }, [transactions, budgets, savingsGoals, level]); // Re-check when these change
 
 
     const handleAuth = async (e) => {
@@ -527,18 +822,13 @@ const App = () => {
             setCurrentPage('dashboard');
 
             if (authMode === 'signup') {
-                showNotification(`Account Created ✨\nWelcome to SpendSave, ${res.user.username || 'User'}!`, 'success', 5000);
+                showNotification(`Account Created ✨\nWelcome to SpendSave, ${res.user.username || 'User'} !`, 'success', 5000);
             } else {
-                showNotification(`Welcome Back, ${res.user.username || 'User'}! 👋`, 'success');
+                showNotification(`Welcome Back, ${res.user.username || 'User'} ! 👋`, 'success');
             }
 
-            // fetch transactions after login
-            const txs = await api.getTransactions();
-            const normalized = txs.map(t => ({
-                ...t,
-                id: t._id || t.id,
-            }));
-            setTransactions(normalized);
+            // Data will be fetched by the useEffect hook watching the 'user' state
+
 
         } catch (err) {
             handleApiError(err, 'Authentication failed');
@@ -588,7 +878,7 @@ const App = () => {
     }, [user]); // Re-run when user logs in/out
 
     // --- BUDGET HANDLERS ---
-    const handleAddBudget = (e) => {
+    const handleAddBudget = async (e) => {
         e.preventDefault();
         if (!budgetCategory || !budgetAmount) return showNotification("Please select a category and amount!", 'warning');
 
@@ -597,41 +887,97 @@ const App = () => {
             return showNotification(`⚠️ A target for "${budgetCategory}" already exists! Please delete the old one first.`, 'warning', 4000);
         }
 
-        const newBudget = {
-            id: Date.now(),
-            category: budgetCategory,
-            amount: parseFloat(budgetAmount),
-            emoji: EXPENSE_CATEGORIES.find(c => c.name === budgetCategory)?.emoji || '💰'
-        };
+        setIsLoading(true);
+        try {
+            const newBudget = await api.createBudget({
+                category: budgetCategory,
+                amount: parseFloat(budgetAmount),
+                period: budgetPeriod,
+                startDate: budgetStartDate,
+                endDate: budgetEndDate
+            });
 
-        const updatedBudgets = [...budgets, newBudget];
-        setBudgets(updatedBudgets);
-        localStorage.setItem('spendsave_budgets', JSON.stringify(updatedBudgets));
+            setBudgets([...budgets, newBudget]);
+            setShowBudgetModal(false);
+            setBudgetCategory('');
+            setBudgetAmount('');
+            setBudgetPeriod('weekly');
+            setBudgetStartDate(new Date().toISOString().split('T')[0]);
+            const nextWeek = new Date();
+            nextWeek.setDate(nextWeek.getDate() + 7);
+            setBudgetEndDate(nextWeek.toISOString().split('T')[0]);
+            setShowCalendar(false);
 
-        setShowBudgetModal(false);
-        setBudgetCategory('');
-        setBudgetAmount('');
-
-        gainXp(50); // +50 XP for creating a budget
-        showNotification("Budget created! +50 XP", "success");
+            gainXp(50);
+            const periodLabel = budgetPeriod.charAt(0).toUpperCase() + budgetPeriod.slice(1);
+            showNotification(`${periodLabel} budget created! + 50 XP`, "success");
+        } catch (err) {
+            handleApiError(err, 'Failed to create budget');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handleDeleteBudget = (id) => {
-        const updated = budgets.filter(b => b.id !== id);
-        setBudgets(updated);
-        localStorage.setItem('spendsave_budgets', JSON.stringify(updated));
+    const setBudgetRange = (start, end) => {
+        setBudgetStartDate(start);
+        setBudgetEndDate(end);
     };
 
-    const calculateBudgetProgress = (category) => {
-        // Calculate total spent in this category
+    const setSavingsRange = (start, end) => {
+        setSavingsStartDate(start);
+        setSavingsEndDate(end);
+    };
+
+    const handleDeleteBudget = async (id) => {
+        try {
+            await api.deleteBudget(id);
+            setBudgets(budgets.filter(b => (b._id || b.id) !== id));
+            showNotification('Budget deleted', 'info');
+        } catch (err) {
+            handleApiError(err, 'Failed to delete budget');
+        }
+    };
+
+    const calculateBudgetProgress = (category, budget) => {
+        if (!budget) return 0;
+
+        const now = new Date();
+        const start = new Date(budget.startDate);
+        let periodStart = start;
+        let periodEnd = budget.endDate ? new Date(budget.endDate) : null;
+
+        if (!periodEnd) {
+            // Fallback to legacy recurring logic if no endDate
+            if (budget.period === 'weekly') {
+                const diffTime = Math.max(0, now - start);
+                const weeksPassed = Math.floor(diffTime / (7 * 24 * 60 * 60 * 1000));
+                periodStart = new Date(start.getTime() + (weeksPassed * 7 * 24 * 60 * 60 * 1000));
+                periodEnd = new Date(periodStart.getTime() + (7 * 24 * 60 * 60 * 1000));
+            } else {
+                const startDay = start.getDate();
+                periodStart = new Date(now.getFullYear(), now.getMonth(), startDay);
+                if (now < periodStart) {
+                    periodStart = new Date(now.getFullYear(), now.getMonth() - 1, startDay);
+                }
+                periodEnd = new Date(periodStart.getFullYear(), periodStart.getMonth() + 1, startDay);
+            }
+        }
+
+        // Calculate total spent in this category within current period
         const spent = transactions
-            .filter(t => t.type === 'expense' && t.category === category)
+            .filter(t => {
+                const txDate = new Date(t.createdAt);
+                return t.type === 'expense' &&
+                    t.category === category &&
+                    txDate >= periodStart &&
+                    txDate <= (periodEnd || now);
+            })
             .reduce((sum, t) => sum + (t.amount || 0), 0);
         return spent;
     };
 
     // --- SAVINGS HANDLERS ---
-    const handleAddSavingsGoal = (e) => {
+    const handleAddSavingsGoal = async (e) => {
         e.preventDefault();
         if (!savingsCategory || !savingsAmount) return showNotification("Please select a category and amount!", 'warning');
 
@@ -640,34 +986,65 @@ const App = () => {
             return showNotification(`⚠️ A goal for "${savingsCategory}" already exists! Please delete the old one first.`, 'warning', 4000);
         }
 
-        const newGoal = {
-            id: Date.now(),
-            category: savingsCategory,
-            amount: parseFloat(savingsAmount),
-            emoji: INCOME_CATEGORIES.find(c => c.name === savingsCategory)?.emoji || '💰'
-        };
+        setIsLoading(true);
+        try {
+            const newGoal = {
+                category: savingsCategory,
+                amount: parseFloat(savingsAmount),
+                period: savingsPeriod,
+                startDate: savingsStartDate,
+                endDate: savingsEndDate,
+                emoji: INCOME_CATEGORIES.find(c => c.name === savingsCategory)?.emoji || '💰'
+            };
 
-        const updatedGoals = [...savingsGoals, newGoal];
-        setSavingsGoals(updatedGoals);
-        localStorage.setItem('spendsave_savings', JSON.stringify(updatedGoals));
+            const savedGoal = await api.createSavingsGoal(newGoal);
+            setSavingsGoals([...savingsGoals, savedGoal]);
 
-        setShowSavingsModal(false);
-        setSavingsCategory('');
-        setSavingsAmount('');
+            setShowSavingsModal(false);
+            setSavingsCategory('');
+            setSavingsAmount('');
+            setSavingsPeriod('monthly');
+            const now = new Date();
+            const startStr = now.toISOString().split('T')[0];
+            const endStr = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate()).toISOString().split('T')[0];
+            setSavingsStartDate(startStr);
+            setSavingsEndDate(endStr);
+            setShowSavingsCalendar(false);
 
-        gainXp(50); // +50 XP for creating a savings goal
-        showNotification("Savings Goal created! +50 XP", "success");
+            gainXp(50); // +50 XP for creating a savings goal
+            showNotification("Savings Goal created! +50 XP", "success");
+        } catch (err) {
+            console.error('Goal creation error:', err);
+            showNotification("Failed to save goal. Try again!", "error");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handleDeleteSavingsGoal = (id) => {
-        const updated = savingsGoals.filter(g => g.id !== id);
-        setSavingsGoals(updated);
-        localStorage.setItem('spendsave_savings', JSON.stringify(updated));
+    const handleDeleteSavingsGoal = async (id) => {
+        try {
+            await api.deleteSavingsGoal(id);
+            setSavingsGoals(savingsGoals.filter(g => (g._id || g.id) !== id));
+            showNotification("Goal deleted!", "info");
+        } catch (err) {
+            console.error('Goal deletion error:', err);
+            showNotification("Failed to delete goal.", "error");
+        }
     };
 
-    const calculateSavingsProgress = (category) => {
+    const calculateSavingsProgress = (category, goal) => {
+        if (!goal) return 0;
+        const start = goal.startDate ? new Date(goal.startDate) : new Date(0);
+        const end = goal.endDate ? new Date(goal.endDate) : new Date();
+
         return transactions
-            .filter(t => t.type === 'income' && t.category === category)
+            .filter(t => {
+                const txDate = new Date(t.createdAt);
+                return t.type === 'income' &&
+                    t.category === category &&
+                    txDate >= start &&
+                    txDate <= end;
+            })
             .reduce((sum, t) => sum + (t.amount || 0), 0);
     };
 
@@ -736,7 +1113,8 @@ const App = () => {
             if (transactionType === 'expense') {
                 const spendingBudget = budgets.find(b => b.category === finalCategory);
                 if (spendingBudget) {
-                    const currentSpent = calculateBudgetProgress(finalCategory);
+                    const budget = budgets.find(b => b.category === finalCategory);
+                    const currentSpent = budget ? calculateBudgetProgress(finalCategory, budget) : 0;
                     // Note: calculateBudgetProgress is sync and based on 'transactions' state, 
                     // which we just updated. However, React state updates are async, 
                     // so 'transactions' might not reflect the new one yet depending on timing,
@@ -747,7 +1125,7 @@ const App = () => {
                         .reduce((sum, t) => sum + (t.amount || 0), 0);
 
                     if (newTotal > spendingBudget.amount) {
-                        showNotification(`Alert: You have exceeded your ${finalCategory} target!\nTarget: ₦${spendingBudget.amount.toLocaleString()}\nSpent: ₦${newTotal.toLocaleString()}`, 'warning', 5000);
+                        showNotification(`Alert: You have exceeded your ${finalCategory} target!\nTarget: ₦${spendingBudget.amount.toLocaleString()} \nSpent: ₦${newTotal.toLocaleString()} `, 'warning', 5000);
                     }
                 }
             }
@@ -817,6 +1195,33 @@ const App = () => {
         // Check only for today's date entries
         const uniqueDays = new Set(transactions.map(t => new Date(t.createdAt).toDateString())).size;
         return uniqueDays;
+    };
+
+    // Check if an achievement is unlocked
+    const isAchievementUnlocked = (achievementId) => {
+        switch (achievementId) {
+            case 'starter':
+                return transactions.length > 0;
+            case 'night_owl':
+                return transactions.some(t => new Date(t.createdAt).getHours() >= 22);
+            case 'big_spender':
+                return transactions.some(t => t.type === 'expense' && t.amount >= 50000);
+            case 'penny_pincher':
+                return transactions.some(t => t.type === 'expense' && t.amount < 1000);
+            case 'goal_crusher':
+                return savingsGoals.some(g => calculateSavingsProgress(g.category, g) >= g.amount);
+            case 'dedicated':
+                return getStreak() >= 30;
+            case 'budget_master':
+                return budgets.some(b => {
+                    const spent = calculateBudgetProgress(b.category, b);
+                    return spent < b.amount;
+                });
+            case 'level_5':
+                return level >= 5;
+            default:
+                return false;
+        }
     };
 
     // 1. Expense Category Data (used for Expense Pie Chart)
@@ -1141,22 +1546,22 @@ const App = () => {
                                 <button
                                     type="button"
                                     onClick={() => !editingTransaction && setTransactionType('expense')}
-                                    className={`py-4 rounded-xl font-bold uppercase tracking-wider transition-all ${transactionType === 'expense'
+                                    className={`py-4 rounded-xl font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${transactionType === 'expense'
                                         ? 'bg-genz-pink text-black shadow-lg'
                                         : 'text-genz-textDim hover:text-white'
                                         } ${editingTransaction ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
-                                    Expense
+                                    💸 Expense
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => !editingTransaction && setTransactionType('income')}
-                                    className={`py-4 rounded-xl font-bold uppercase tracking-wider transition-all ${transactionType === 'income'
+                                    className={`py-4 rounded-xl font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${transactionType === 'income'
                                         ? 'bg-genz-aqua text-black shadow-lg'
                                         : 'text-genz-textDim hover:text-white'
                                         } ${editingTransaction ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
-                                    Income
+                                    💰 Income
                                 </button>
                             </div>
 
@@ -1178,21 +1583,21 @@ const App = () => {
 
                             <div>
                                 <label className="text-genz-purple text-xs font-bold uppercase tracking-widest mb-2 block ml-2">Category</label>
-                                <div className="grid grid-cols-3 gap-3">
+                                <div className="flex flex-wrap gap-2">
                                     {(transactionType === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES).map(cat => (
                                         <button
                                             key={cat.name}
                                             type="button"
                                             onClick={() => setCategory(cat.name)}
-                                            className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${category === cat.name
+                                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-2 ${category === cat.name
                                                 ? (transactionType === 'expense'
-                                                    ? 'bg-black/50 border-genz-pink shadow-[0_0_15px_rgba(215,122,168,0.3)]'
-                                                    : 'bg-black/50 border-genz-aqua shadow-[0_0_15px_rgba(92,196,246,0.3)]')
-                                                : 'bg-genz-card/50 border-genz-card hover:border-genz-textDim/50'
+                                                    ? 'bg-genz-pink text-black border-transparent shadow-lg shadow-genz-pink/20'
+                                                    : 'bg-genz-aqua text-black border-transparent shadow-lg shadow-genz-aqua/20')
+                                                : 'bg-genz-card/50 text-genz-textDim border-genz-borderDark hover:border-genz-aqua/30'
                                                 }`}
                                         >
-                                            <div className="text-2xl">{cat.emoji}</div>
-                                            <div className="text-[10px] font-bold uppercase tracking-wide">{cat.name}</div>
+                                            <span className="text-sm">{cat.emoji}</span>
+                                            {cat.name}
                                         </button>
                                     ))}
                                 </div>
@@ -1474,16 +1879,21 @@ const App = () => {
                                         <p className="text-center text-genz-textDim text-lg font-medium italic">✨ No targets set yet. Add one to track your spending!🎯</p>
                                     ) : (
                                         budgets.map(budget => {
-                                            const spent = calculateBudgetProgress(budget.category);
+                                            const spent = calculateBudgetProgress(budget.category, budget);
                                             const progress = Math.min((spent / budget.amount) * 100, 100);
                                             const isExceeded = spent > budget.amount;
 
                                             return (
-                                                <div key={budget.id} className="bg-black/30 rounded-xl p-3 relative group">
+                                                <div key={budget._id || budget.id} className="bg-black/30 rounded-xl p-3 relative group">
                                                     <div className="flex justify-between items-center mb-2">
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-xl">{budget.emoji}</span>
-                                                            <span className="font-bold text-sm">{budget.category}</span>
+                                                            <span className="text-xl">{EXPENSE_CATEGORIES.find(c => c.name === budget.category)?.emoji || '💰'}</span>
+                                                            <div className="flex flex-col">
+                                                                <span className="font-bold text-sm leading-tight">{budget.category}</span>
+                                                                <span className="text-[9px] text-genz-textDim uppercase tracking-tighter opacity-70">
+                                                                    {budget.period === 'weekly' ? '📅 Weekly' : budget.period === 'monthly' ? '📆 Monthly' : '🗓️ Custom'}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                         <div className="text-right">
                                                             <span className={`text-xs font-bold ${isExceeded ? 'text-genz-pink' : 'text-white'}`}>
@@ -1503,7 +1913,7 @@ const App = () => {
 
                                                     {/* Delete Button (visible on hover) */}
                                                     <button
-                                                        onClick={() => handleDeleteBudget(budget.id)}
+                                                        onClick={() => handleDeleteBudget(budget._id || budget.id)}
                                                         className="absolute top-2 right-2 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                                                     >
                                                         <Icons.Trash />
@@ -1513,8 +1923,6 @@ const App = () => {
                                         })
                                     )}
                                 </div>
-
-
 
                                 {/* Savings Goals Section */}
                                 <div className="pt-6 border-t border-genz-borderDark/50 mt-6">
@@ -1533,16 +1941,24 @@ const App = () => {
                                             <p className="text-center text-genz-textDim text-xl font-medium italic">✨ Set a goal to save more! 🚀</p>
                                         ) : (
                                             savingsGoals.map(goal => {
-                                                const saved = calculateSavingsProgress(goal.category);
+                                                const goalId = goal._id || goal.id;
+                                                const saved = calculateSavingsProgress(goal.category, goal);
                                                 const progress = Math.min((saved / goal.amount) * 100, 100);
                                                 const isCompleted = saved >= goal.amount;
 
                                                 return (
-                                                    <div key={goal.id} className={`rounded-xl p-3 relative group ${isCompleted ? 'bg-green-900/20 border border-green-500/30' : 'bg-black/30'}`}>
-                                                        <div className="flex justify-between items-center mb-2">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-xl">{goal.emoji}</span>
+                                                    <div key={goalId} className={`rounded-xl p-3 relative group ${isCompleted ? 'bg-green-900/20 border border-green-500/30' : 'bg-black/30'}`}>
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <div className="flex flex-col">
                                                                 <span className="font-bold text-sm text-white">{goal.category}</span>
+                                                                {goal.startDate && (
+                                                                    <span className="text-[10px] text-genz-textDim font-bold uppercase tracking-tighter opacity-70">
+                                                                        🗓️ {goal.period === 'custom'
+                                                                            ? `${new Date(goal.startDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} — ${new Date(goal.endDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}`
+                                                                            : `${goal.period.charAt(0).toUpperCase() + goal.period.slice(1)} Goal`
+                                                                        }
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                             <div className="text-right">
                                                                 <span className="text-xs font-bold text-green-400">
@@ -1562,7 +1978,7 @@ const App = () => {
 
                                                         {/* Delete Button (visible on hover) */}
                                                         <button
-                                                            onClick={() => handleDeleteSavingsGoal(goal.id)}
+                                                            onClick={() => handleDeleteSavingsGoal(goalId)}
                                                             className="absolute top-2 right-2 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                                                         >
                                                             <Icons.Trash />
@@ -1572,7 +1988,7 @@ const App = () => {
                                             })
                                         )}
                                     </div>
-                                </div>
+                                </div >
 
                                 <div className="flex justify-between items-center mt-6 mb-2 pt-4 border-t border-genz-borderDark/50">
                                     <span className="text-genz-textDim text-sm font-bold uppercase tracking-wider">Current Streak</span>
@@ -1582,88 +1998,74 @@ const App = () => {
                                 {/* Badges Section */}
                                 <div className="pt-6 border-t border-genz-borderDark/50 mt-6 text-left">
                                     <span className="text-genz-textDim text-sm font-bold uppercase tracking-wider mb-4 block">Achievements 🏆</span>
-                                    <div className="flex gap-3 flex-wrap">
-                                        {/* Badge 1: Starter */}
-                                        {transactions.length > 0 && (
-                                            <div className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 p-2 rounded-xl flex items-center gap-2 group hover:scale-105 transition-all cursor-default">
-                                                <span className="text-2xl drop-shadow-lg">🌟</span>
-                                                <div className="flex flex-col">
-                                                    <span className="text-[10px] bg-yellow-500/20 text-yellow-300 px-1.5 py-0.5 rounded uppercase font-bold w-fit">Starter</span>
-                                                    <span className="text-xs font-bold text-white">First Step</span>
-                                                </div>
-                                            </div>
-                                        )}
+                                    <div className="space-y-4">
+                                        {(() => {
+                                            // Find the highest index unlocked achievement
+                                            const unlockedIndices = ACHIEVEMENTS.map((a, i) => isAchievementUnlocked(a.id) ? i : -1).filter(idx => idx !== -1);
+                                            const currentIdx = unlockedIndices.length > 0 ? Math.max(...unlockedIndices) : -1;
+                                            const currentAchievement = currentIdx !== -1 ? ACHIEVEMENTS[currentIdx] : null;
 
-                                        {/* Badge 2: Night Owl (Transaction after 10PM) */}
-                                        {transactions.some(t => new Date(t.createdAt).getHours() >= 22) && (
-                                            <div className="bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 p-2 rounded-xl flex items-center gap-2 group hover:scale-105 transition-all cursor-default">
-                                                <span className="text-2xl drop-shadow-lg">🦉</span>
-                                                <div className="flex flex-col">
-                                                    <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded uppercase font-bold w-fit">Night Owl</span>
-                                                    <span className="text-xs font-bold text-white">Late Spender</span>
-                                                </div>
-                                            </div>
-                                        )}
+                                            // Find the first locked achievement after the current one, or just the first locked one
+                                            const nextIdx = ACHIEVEMENTS.findIndex((a, i) => !isAchievementUnlocked(a.id));
+                                            const nextAchievement = nextIdx !== -1 ? ACHIEVEMENTS[nextIdx] : null;
 
-                                        {/* Badge 3: Big Spender (> 50k) */}
-                                        {transactions.some(t => t.type === 'expense' && t.amount >= 50000) && (
-                                            <div className="bg-gradient-to-br from-pink-500/20 to-rose-500/20 border border-pink-500/30 p-2 rounded-xl flex items-center gap-2 group hover:scale-105 transition-all cursor-default">
-                                                <span className="text-2xl drop-shadow-lg">💸</span>
-                                                <div className="flex flex-col">
-                                                    <span className="text-[10px] bg-pink-500/20 text-pink-300 px-1.5 py-0.5 rounded uppercase font-bold w-fit">Whale</span>
-                                                    <span className="text-xs font-bold text-white">Big Spender</span>
-                                                </div>
-                                            </div>
-                                        )}
+                                            return (
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                    {/* Current Milestone */}
+                                                    <div
+                                                        onClick={() => currentAchievement && setSelectedAchievement(currentAchievement)}
+                                                        className={`bg-gradient-to-br from-genz-purple/10 to-transparent border border-genz-purple/30 p-4 rounded-2xl flex flex-col gap-3 group hover:scale-[1.02] transition-all cursor-pointer relative overflow-hidden ${!currentAchievement ? 'opacity-50 grayscale border-dashed' : ''}`}
+                                                    >
+                                                        <span className="text-[10px] font-black uppercase tracking-widest text-genz-purple/80">Current Milestone</span>
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-16 h-16 bg-genz-purple/20 rounded-2xl flex items-center justify-center text-4xl shadow-lg border border-genz-purple/20">
+                                                                {currentAchievement ? currentAchievement.icon : '❔'}
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="font-black text-white text-lg leading-tight">{currentAchievement ? currentAchievement.title : 'No Medals Yet'}</h4>
+                                                                <p className="text-genz-textDim text-xs font-bold">{currentAchievement ? currentAchievement.subtitle : 'Start tracking to earn badges'}</p>
+                                                            </div>
+                                                        </div>
+                                                        {currentAchievement && <div className="absolute top-2 right-2 text-genz-purple">✨</div>}
+                                                    </div>
 
-                                        {/* Badge 4: Penny Pincher (< 1k) */}
-                                        {transactions.some(t => t.type === 'expense' && t.amount < 1000) && (
-                                            <div className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-cyan-500/30 p-2 rounded-xl flex items-center gap-2 group hover:scale-105 transition-all cursor-default">
-                                                <span className="text-2xl drop-shadow-lg">🪙</span>
-                                                <div className="flex flex-col">
-                                                    <span className="text-[10px] bg-cyan-500/20 text-cyan-300 px-1.5 py-0.5 rounded uppercase font-bold w-fit">Thrifty</span>
-                                                    <span className="text-xs font-bold text-white">Penny Pincher</span>
+                                                    {/* Next Goal */}
+                                                    {nextAchievement ? (
+                                                        <div
+                                                            onClick={() => setSelectedAchievement(nextAchievement)}
+                                                            className="bg-black/30 border border-genz-borderDark p-4 rounded-2xl flex flex-col gap-3 group hover:border-genz-aqua/40 transition-all cursor-pointer hover:bg-black/40"
+                                                        >
+                                                            <div className="flex justify-between items-start">
+                                                                <span className="text-[10px] font-black uppercase tracking-widest text-genz-textDim/60">Next Goal</span>
+                                                                <div className="w-6 h-6 rounded-full bg-genz-dark border border-genz-borderDark flex items-center justify-center">
+                                                                    <Icons.Lock size={12} className="text-genz-textDim" />
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-12 h-12 bg-black/40 rounded-xl flex items-center justify-center text-2xl grayscale blur-[1px] opacity-40">
+                                                                    {nextAchievement.icon}
+                                                                </div>
+                                                                <div>
+                                                                    <h4 className="font-bold text-genz-textDim text-sm">{nextAchievement.title}</h4>
+                                                                    <p className="text-[10px] text-genz-textDim/60 font-medium">To unlock: {nextAchievement.subtitle}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="bg-gradient-to-br from-yellow-500/10 to-transparent border border-yellow-500/20 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+                                                            <span className="text-3xl mb-1">👑</span>
+                                                            <p className="text-[10px] font-black uppercase text-yellow-500">Legend Status</p>
+                                                            <p className="text-white font-bold text-sm">All achievements unlocked!</p>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            </div>
-                                        )}
-
-                                        {/* Badge 5: Goal Crusher */}
-                                        {savingsGoals.some(g => calculateSavingsProgress(g.category) >= g.amount) && (
-                                            <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 p-2 rounded-xl flex items-center gap-2 group hover:scale-105 transition-all cursor-default">
-                                                <span className="text-2xl drop-shadow-lg">💎</span>
-                                                <div className="flex flex-col">
-                                                    <span className="text-[10px] bg-green-500/20 text-green-300 px-1.5 py-0.5 rounded uppercase font-bold w-fit">Rich</span>
-                                                    <span className="text-xs font-bold text-white">Goal Crusher</span>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Badge 6: Dedicated (30 Days Streak) */}
-                                        {getStreak() >= 30 && (
-                                            <div className="bg-gradient-to-br from-purple-500/20 to-fuchsia-500/20 border border-purple-500/30 p-2 rounded-xl flex items-center gap-2 group hover:scale-105 transition-all cursor-default">
-                                                <span className="text-2xl drop-shadow-lg">🗓️</span>
-                                                <div className="flex flex-col">
-                                                    <span className="text-[10px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded uppercase font-bold w-fit">Dedicated</span>
-                                                    <span className="text-xs font-bold text-white">30 Days Active</span>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Locked Badge (Level 5) */}
-                                        {level < 5 && (
-                                            <div className="bg-black/20 border border-white/5 p-2 rounded-xl flex items-center gap-2 opacity-50 grayscale">
-                                                <span className="text-2xl">👑</span>
-                                                <div className="flex flex-col">
-                                                    <span className="text-[10px] bg-white/10 text-genz-textDim px-1.5 py-0.5 rounded uppercase font-bold w-fit">PxLocked</span>
-                                                    <span className="text-xs font-bold text-genz-textDim">Level 5</span>
-                                                </div>
-                                            </div>
-                                        )}
+                                            );
+                                        })()}
                                     </div>
                                 </div>
 
-                            </div>
-                        </div>
+                            </div >
+                        </div >
 
                         <button
                             onClick={handleLogout}
@@ -1673,135 +2075,347 @@ const App = () => {
                         </button>
 
                         {/* LEVEL UP MODAL */}
-                        {showLevelUp && (
-                            <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
-                                <div className="bg-gradient-to-br from-yellow-400 to-orange-500 p-1 rounded-[2rem] animate-in zoom-in duration-500 shadow-[0_0_100px_rgba(255,165,0,0.5)]">
-                                    <div className="bg-black/90 backdrop-blur-xl rounded-[1.9rem] p-8 text-center border border-yellow-500/50 relative overflow-hidden">
-                                        <div className="absolute inset-0 bg-yellow-500/10 animate-pulse"></div>
-                                        <h2 className="text-5xl mb-2 animate-bounce">🆙</h2>
-                                        <h3 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-400 uppercase italic">Level Up!</h3>
-                                        <p className="text-white font-bold text-lg mt-2">You are now Level {level}!</p>
-                                        <p className="text-yellow-200/80 text-sm font-mono mt-1">Keep crushing your goals! 🚀</p>
+                        {
+                            showLevelUp && (
+                                <div className="fixed inset-0 z-[300] flex items-center justify-center pointer-events-none">
+                                    <div className="bg-gradient-to-br from-yellow-400 to-orange-500 p-1 rounded-[2rem] animate-in zoom-in duration-500 shadow-[0_0_100px_rgba(255,165,0,0.5)]">
+                                        <div className="bg-black/90 backdrop-blur-xl rounded-[1.9rem] p-8 text-center border border-yellow-500/50 relative overflow-hidden">
+                                            <div className="absolute inset-0 bg-yellow-500/10 animate-pulse"></div>
+                                            <h2 className="text-5xl mb-2 animate-bounce">🆙</h2>
+                                            <h3 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-400 uppercase italic">Level Up!</h3>
+                                            <p className="text-white font-bold text-lg mt-2">You are now Level {level}!</p>
+                                            <p className="text-yellow-200/80 text-sm font-mono mt-1">Keep crushing your goals! 🚀</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
+                            )
+                        }
 
                         {/* Add Budget Modal */}
-                        {showBudgetModal && (
-                            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                                <div className="bg-genz-card border border-genz-borderDark w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-                                    <h3 className="text-2xl font-black text-white mb-6">Set Target 🎯</h3>
-                                    <form onSubmit={handleAddBudget} className="space-y-4">
-                                        <div>
-                                            <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Category</label>
-                                            <div className="grid grid-cols-5 gap-2">
-                                                {EXPENSE_CATEGORIES.map(cat => (
+                        {
+                            showBudgetModal && (
+                                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+                                    <div className="bg-genz-card border border-genz-borderDark w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col overflow-hidden">
+                                        <h3 className="text-2xl font-black text-white mb-4 shrink-0">Set Target 🎯</h3>
+                                        <form onSubmit={handleAddBudget} className="flex flex-col flex-1 overflow-hidden">
+                                            <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+                                                <div>
+                                                    <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Category</label>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {EXPENSE_CATEGORIES.map(cat => (
+                                                            <button
+                                                                key={cat.name}
+                                                                type="button"
+                                                                onClick={() => setBudgetCategory(cat.name)}
+                                                                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${budgetCategory === cat.name ? 'bg-genz-aqua text-white border-transparent shadow-lg shadow-genz-aqua/20' : 'bg-genz-dark text-genz-textDim border-genz-borderDark hover:border-genz-aqua/30'}`}
+                                                            >
+                                                                {cat.name}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Target Amount</label>
+                                                    <div className="relative">
+                                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-genz-textDim font-bold">₦</span>
+                                                        <input
+                                                            type="number"
+                                                            value={budgetAmount}
+                                                            onChange={(e) => setBudgetAmount(e.target.value)}
+                                                            className="w-full bg-genz-dark border border-genz-borderDark rounded-xl py-4 pl-10 pr-4 text-white font-bold focus:outline-none focus:border-genz-aqua transition-colors"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="text-genz-textDim text-xs font-bold uppercase block ml-1">Tracking Period</label>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {['weekly', 'monthly', 'custom'].map(p => (
+                                                            <button
+                                                                key={p}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setBudgetPeriod(p);
+                                                                    if (p === 'weekly') {
+                                                                        const start = budgetStartDate || new Date().toISOString().split('T')[0];
+                                                                        const end = new Date(new Date(start).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                                                                        setBudgetRange(start, end);
+                                                                    } else if (p === 'monthly') {
+                                                                        const d = new Date(budgetStartDate || new Date());
+                                                                        const end = new Date(d.getFullYear(), d.getMonth() + 1, d.getDate()).toISOString().split('T')[0];
+                                                                        setBudgetRange(budgetStartDate || d.toISOString().split('T')[0], end);
+                                                                    } else if (p === 'custom') {
+                                                                        setShowCalendar(true);
+                                                                    }
+                                                                }}
+                                                                className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border ${budgetPeriod === p ? 'bg-genz-aqua text-white border-transparent shadow-lg shadow-genz-aqua/20' : 'bg-genz-dark text-genz-textDim border-genz-borderDark hover:border-genz-aqua/30'}`}
+                                                            >
+                                                                {p}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-3 pt-2">
                                                     <button
-                                                        key={cat.name}
                                                         type="button"
-                                                        onClick={() => setBudgetCategory(cat.name)}
-                                                        className={`aspect-square rounded-xl flex items-center justify-center text-xl transition-all ${budgetCategory === cat.name ? 'bg-genz-aqua text-white scale-110 shadow-lg shadow-genz-aqua/20' : 'bg-genz-dark text-genz-textDim hover:bg-genz-borderDark'}`}
+                                                        onClick={() => setShowCalendar(!showCalendar)}
+                                                        className="w-full flex items-center justify-between p-3 bg-genz-dark/50 border border-genz-borderDark rounded-2xl group hover:border-genz-aqua transition-colors"
                                                     >
-                                                        {cat.emoji}
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-lg bg-genz-aqua/10 flex items-center justify-center text-genz-aqua text-sm group-hover:scale-110 transition-transform">
+                                                                🗓️
+                                                            </div>
+                                                            <div className="text-left">
+                                                                <p className="text-[8px] text-genz-textDim font-black uppercase tracking-widest leading-none mb-1">Target Timeline</p>
+                                                                <p className="text-white font-bold text-xs">
+                                                                    {budgetStartDate ? new Date(budgetStartDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) : 'Pick Start'}
+                                                                    {budgetEndDate && ` — ${new Date(budgetEndDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}`}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <div className={`transition-transform duration-300 ${showCalendar ? 'rotate-180' : ''}`}>
+                                                            <Icons.ChevronRight />
+                                                        </div>
                                                     </button>
-                                                ))}
-                                            </div>
-                                        </div>
 
-                                        <div>
-                                            <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Target Amount</label>
-                                            <div className="relative">
-                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-genz-textDim font-bold">₦</span>
-                                                <input
-                                                    type="number"
-                                                    value={budgetAmount}
-                                                    onChange={(e) => setBudgetAmount(e.target.value)}
-                                                    className="w-full bg-genz-dark border border-genz-borderDark rounded-xl py-4 pl-10 pr-4 text-white font-bold focus:outline-none focus:border-genz-aqua transition-colors"
-                                                    placeholder="0.00"
-                                                />
-                                            </div>
-                                        </div>
+                                                    {showCalendar && (
+                                                        <div className="animate-in slide-in-from-top-2 duration-300">
+                                                            <MiniCalendar
+                                                                startDate={budgetStartDate}
+                                                                endDate={budgetEndDate}
+                                                                accentColor="genz-aqua"
+                                                                onSelectRange={(start, end) => {
+                                                                    if (!start) {
+                                                                        setBudgetRange(null, null);
+                                                                        return;
+                                                                    }
+                                                                    if (budgetPeriod === 'weekly') {
+                                                                        const newEnd = new Date(new Date(start).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                                                                        setBudgetRange(start, newEnd);
+                                                                    } else if (budgetPeriod === 'monthly') {
+                                                                        const d = new Date(start);
+                                                                        const newEnd = new Date(d.getFullYear(), d.getMonth() + 1, d.getDate()).toISOString().split('T')[0];
+                                                                        setBudgetRange(start, newEnd);
+                                                                    } else {
+                                                                        setBudgetStartDate(start);
+                                                                        setBudgetEndDate(end);
+                                                                        if (start && end) setBudgetPeriod('custom');
+                                                                    }
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
 
-                                        <div className="flex gap-3 pt-4">
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowBudgetModal(false)}
-                                                className="flex-1 py-4 rounded-xl font-bold text-genz-textDim hover:text-white hover:bg-genz-dark transition-all"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button
-                                                type="submit"
-                                                className="flex-1 bg-genz-aqua text-white py-4 rounded-xl font-bold shadow-lg shadow-genz-aqua/20 hover:scale-[1.02] active:scale-95 transition-all"
-                                            >
-                                                Save Target
-                                            </button>
-                                        </div>
-                                    </form>
+                                            </div>
+
+                                            <div className="flex gap-3 pt-4 shrink-0 bg-genz-card border-t border-genz-borderDark/20 mt-auto">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowBudgetModal(false)}
+                                                    className="flex-1 py-4 rounded-xl font-bold text-genz-textDim hover:text-white hover:bg-genz-dark transition-all"
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    type="submit"
+                                                    disabled={isLoading}
+                                                    className={`flex-1 bg-genz-aqua text-white py-4 rounded-xl font-bold shadow-lg shadow-genz-aqua/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 ${isLoading ? 'opacity-70 cursor-wait' : ''}`}
+                                                >
+                                                    {isLoading ? <><Icons.Spinner /> Saving...</> : 'Save Target'}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )
+                        }
 
                         {/* Add Savings Modal */}
-                        {showSavingsModal && (
-                            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                                <div className="bg-genz-card border border-genz-borderDark w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-                                    <h3 className="text-2xl font-black text-white mb-6">Set Goal 💸</h3>
-                                    <form onSubmit={handleAddSavingsGoal} className="space-y-4">
-                                        <div>
-                                            <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Income</label>
-                                            <div className="grid grid-cols-4 gap-2">
-                                                {INCOME_CATEGORIES.map(cat => (
+                        {
+                            showSavingsModal && (
+                                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+                                    <div className="bg-genz-card border border-genz-borderDark w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col overflow-hidden">
+                                        <h3 className="text-2xl font-black text-white mb-4">Set Goal 🎯</h3>
+                                        <form onSubmit={handleAddSavingsGoal} className="flex flex-col flex-1 overflow-hidden">
+                                            <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+                                                <div>
+                                                    <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Income Source</label>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {INCOME_CATEGORIES.map(cat => (
+                                                            <button
+                                                                key={cat.name}
+                                                                type="button"
+                                                                onClick={() => setSavingsCategory(cat.name)}
+                                                                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${savingsCategory === cat.name ? 'bg-emerald-500 text-black border-transparent shadow-lg shadow-emerald-500/30' : 'bg-genz-dark text-genz-textDim border-genz-borderDark hover:border-emerald-500/30'}`}
+                                                            >
+                                                                {cat.name}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Goal Amount</label>
+                                                    <div className="relative">
+                                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-genz-textDim font-bold">₦</span>
+                                                        <input
+                                                            type="number"
+                                                            value={savingsAmount}
+                                                            onChange={(e) => setSavingsAmount(e.target.value)}
+                                                            className="w-full bg-genz-dark border border-genz-borderDark rounded-xl py-4 pl-10 pr-4 text-white font-bold focus:outline-none focus:border-emerald-500 transition-colors"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <div className="flex justify-between items-center mb-2">
+                                                        <label className="text-genz-textDim text-[10px] font-bold uppercase tracking-widest">Tracking Period</label>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        {['weekly', 'monthly', 'custom'].map(p => (
+                                                            <button
+                                                                key={p}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setSavingsPeriod(p);
+                                                                    if (p === 'weekly') {
+                                                                        const start = savingsStartDate || new Date().toISOString().split('T')[0];
+                                                                        const end = new Date(new Date(start).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                                                                        setSavingsRange(start, end);
+                                                                    } else if (p === 'monthly') {
+                                                                        const d = new Date(savingsStartDate || new Date());
+                                                                        const end = new Date(d.getFullYear(), d.getMonth() + 1, d.getDate()).toISOString().split('T')[0];
+                                                                        setSavingsRange(savingsStartDate || d.toISOString().split('T')[0], end);
+                                                                    } else if (p === 'custom') {
+                                                                        setShowSavingsCalendar(true);
+                                                                    }
+                                                                }}
+                                                                className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${savingsPeriod === p ? 'bg-emerald-500 text-black border-transparent shadow-lg shadow-emerald-500/30' : 'bg-genz-card/50 text-genz-textDim border-genz-borderDark hover:border-emerald-500/30'}`}
+                                                            >
+                                                                {p}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-3 pt-2">
                                                     <button
-                                                        key={cat.name}
                                                         type="button"
-                                                        onClick={() => setSavingsCategory(cat.name)}
-                                                        className={`aspect-square rounded-xl flex items-center justify-center text-xl transition-all ${savingsCategory === cat.name ? 'bg-green-500 text-black scale-110 shadow-lg shadow-green-500/20' : 'bg-genz-dark text-genz-textDim hover:bg-genz-borderDark'}`}
+                                                        onClick={() => setShowSavingsCalendar(!showSavingsCalendar)}
+                                                        className="w-full flex items-center justify-between p-3 bg-genz-dark/50 border border-genz-borderDark rounded-2xl group hover:border-emerald-500 transition-colors"
                                                     >
-                                                        {cat.emoji}
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 text-sm group-hover:scale-110 transition-transform">
+                                                                🗓️
+                                                            </div>
+                                                            <div className="text-left">
+                                                                <p className="text-[8px] text-genz-textDim font-black uppercase tracking-widest leading-none mb-1">Target Timeline</p>
+                                                                <p className="text-white font-bold text-xs">
+                                                                    {savingsPeriod === 'custom'
+                                                                        ? (savingsStartDate && savingsEndDate ? `${new Date(savingsStartDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} — ${new Date(savingsEndDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}` : 'Select Dates')
+                                                                        : `${new Date(savingsStartDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} — ${savingsEndDate ? new Date(savingsEndDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) : '...'}`
+                                                                    }
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <div className={`transition-transform duration-300 ${showSavingsCalendar ? 'rotate-180' : ''}`}>
+                                                            <Icons.ChevronRight />
+                                                        </div>
                                                     </button>
-                                                ))}
-                                            </div>
-                                        </div>
 
-                                        <div>
-                                            <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Goal Amount</label>
-                                            <div className="relative">
-                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-genz-textDim font-bold">₦</span>
-                                                <input
-                                                    type="number"
-                                                    value={savingsAmount}
-                                                    onChange={(e) => setSavingsAmount(e.target.value)}
-                                                    className="w-full bg-genz-dark border border-genz-borderDark rounded-xl py-4 pl-10 pr-4 text-white font-bold focus:outline-none focus:border-green-500 transition-colors"
-                                                    placeholder="0.00"
-                                                />
+                                                    {showSavingsCalendar && (
+                                                        <div className="animate-in slide-in-from-top-2 duration-300">
+                                                            <MiniCalendar
+                                                                startDate={savingsStartDate}
+                                                                endDate={savingsEndDate}
+                                                                accentColor="green-500"
+                                                                onSelectRange={(start, end) => {
+                                                                    if (!start) {
+                                                                        setSavingsStartDate(null);
+                                                                        setSavingsEndDate(null);
+                                                                        return;
+                                                                    }
+                                                                    if (savingsPeriod === 'weekly') {
+                                                                        const newEnd = new Date(new Date(start).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                                                                        setSavingsStartDate(start);
+                                                                        setSavingsEndDate(newEnd);
+                                                                    } else if (savingsPeriod === 'monthly') {
+                                                                        const d = new Date(start);
+                                                                        const newEnd = new Date(d.getFullYear(), d.getMonth() + 1, d.getDate()).toISOString().split('T')[0];
+                                                                        setSavingsStartDate(start);
+                                                                        setSavingsEndDate(newEnd);
+                                                                    } else {
+                                                                        setSavingsStartDate(start);
+                                                                        setSavingsEndDate(end);
+                                                                        if (start && end) setSavingsPeriod('custom');
+                                                                    }
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        <div className="flex gap-3 pt-4">
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowSavingsModal(false)}
-                                                className="flex-1 py-4 rounded-xl font-bold text-genz-textDim hover:text-white hover:bg-genz-dark transition-all"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button
-                                                type="submit"
-                                                className="flex-1 bg-green-500 text-black py-4 rounded-xl font-bold shadow-lg shadow-green-500/20 hover:scale-[1.02] active:scale-95 transition-all"
-                                            >
-                                                Save Goal
-                                            </button>
-                                        </div>
-                                    </form>
+                                            <div className="flex gap-3 pt-4 shrink-0 bg-genz-card border-t border-genz-borderDark/20 mt-auto">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowSavingsModal(false)}
+                                                    className="flex-1 py-4 rounded-xl font-bold text-genz-textDim hover:text-white hover:bg-genz-dark transition-all"
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    type="submit"
+                                                    disabled={isLoading}
+                                                    className={`flex-1 bg-emerald-500 text-black py-4 rounded-xl font-bold shadow-lg shadow-emerald-500/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 ${isLoading ? 'opacity-70 cursor-wait' : ''}`}
+                                                >
+                                                    {isLoading ? <><Icons.Spinner /> Saving...</> : 'Save Goal'}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )
+                        }
+
+                        {/* Achievement Details Modal */}
+                        {
+                            selectedAchievement && (
+                                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                                    <div className="bg-genz-card border border-genz-borderDark w-full max-w-md rounded-[2rem] p-6 shadow-2xl animate-pop-in">
+                                        <div className="text-center mb-6">
+                                            <div className="text-6xl mb-4">{selectedAchievement.icon}</div>
+                                            <h3 className="text-2xl font-black text-white mb-2">{selectedAchievement.title}</h3>
+                                            <p className="text-genz-textDim text-sm">{selectedAchievement.subtitle}</p>
+                                        </div>
+
+                                        <div className="bg-black/30 rounded-xl p-4 mb-4">
+                                            <p className="text-white text-sm leading-relaxed">
+                                                {isAchievementUnlocked(selectedAchievement.id)
+                                                    ? selectedAchievement.description
+                                                    : selectedAchievement.howToUnlock}
+                                            </p>
+                                        </div>
+
+                                        <button
+                                            onClick={() => setSelectedAchievement(null)}
+                                            className="w-full bg-genz-purple text-white py-4 rounded-xl font-bold shadow-lg shadow-genz-purple/20 hover:scale-[1.02] active:scale-95 transition-all"
+                                        >
+                                            Close
+                                        </button>
+                                    </div>
+                                </div>
+                            )
+                        }
 
                         {/* Confetti Overlay */}
                         {showConfetti && <Confetti />}
-                    </div>
+                    </div >
                 )
             }
 

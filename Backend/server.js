@@ -34,6 +34,8 @@ app.use(express.json());
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/transactions', require('./routes/transactions'));
+app.use('/api/budgets', require('./routes/budgets'));
+app.use('/api/savings', require('./routes/savings'));
 
 // Global Error Handler
 app.use((err, req, res, next) => {
