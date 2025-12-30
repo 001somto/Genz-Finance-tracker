@@ -1,8 +1,9 @@
-// src/api.js
-const API_BASE =
-  import.meta.env.VITE_API_BASE ||
-  window?.API_BASE ||
-  "https://genz-finance-tracker.onrender.com";
+// detect if we are running locally to point to local backend
+const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+
+const API_BASE = isLocal
+  ? "http://localhost:4000"
+  : (import.meta.env.VITE_API_BASE || "https://genz-finance-tracker.onrender.com");
 
 async function request(path, options = {}) {
   const token = sessionStorage.getItem("spendsave_token");

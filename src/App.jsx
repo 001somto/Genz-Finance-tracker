@@ -376,13 +376,13 @@ const ACHIEVEMENTS = [
     {
         id: 'level_5',
         icon: '👑',
-        title: 'Locked',
+        title: 'Grandmaster',
         subtitle: 'Level 5',
-        bgGradient: 'from-black/20 to-black/20',
-        borderColor: 'border-white/5',
-        badgeBg: 'bg-white/10',
-        badgeText: 'text-genz-textDim',
-        description: 'Reach Level 5 to unlock this exclusive achievement!',
+        bgGradient: 'from-amber-400/20 to-yellow-600/20',
+        borderColor: 'border-yellow-500/30',
+        badgeBg: 'bg-yellow-500/20',
+        badgeText: 'text-yellow-300',
+        description: 'Elite Level Reached! You are a master of your finances.',
         howToUnlock: 'Earn enough XP to reach Level 5.',
     },
 ];
@@ -838,10 +838,18 @@ const App = () => {
     };
 
     const handleLogout = () => {
-        sessionStorage.removeItem('spendsave_token');
-        sessionStorage.removeItem('spendsave_user');
-        setUser(null);
-        setCurrentPage('login');
+        setIsLoading(true);
+        setTimeout(() => {
+            sessionStorage.removeItem('spendsave_token');
+            sessionStorage.removeItem('spendsave_user');
+            setUser(null);
+            setCurrentPage('login');
+            // Security: Clear auth inputs
+            setEmail('');
+            setPassword('');
+            setUsername('');
+            setIsLoading(false);
+        }, 1500);
     };
 
     // --- INACTIVITY TIMER ---
@@ -908,9 +916,8 @@ const App = () => {
             setBudgetEndDate(nextWeek.toISOString().split('T')[0]);
             setShowCalendar(false);
 
-            gainXp(50);
             const periodLabel = budgetPeriod.charAt(0).toUpperCase() + budgetPeriod.slice(1);
-            showNotification(`${periodLabel} budget created! + 50 XP`, "success");
+            showNotification(`${periodLabel} budget target set! 🎯`, "success");
         } catch (err) {
             handleApiError(err, 'Failed to create budget');
         } finally {
@@ -1011,8 +1018,7 @@ const App = () => {
             setSavingsEndDate(endStr);
             setShowSavingsCalendar(false);
 
-            gainXp(50); // +50 XP for creating a savings goal
-            showNotification("Savings Goal created! +50 XP", "success");
+            showNotification("Savings Goal set! 🚀", "success");
         } catch (err) {
             console.error('Goal creation error:', err);
             showNotification("Failed to save goal. Try again!", "error");
@@ -1851,14 +1857,23 @@ const App = () => {
                             {/* LEVEL & XP */}
                             <div className="mt-6 mb-2 px-4">
                                 <div className="flex justify-between items-end mb-2">
-                                    <span className="text-genz-aqua font-black text-lg uppercase tracking-widest">Level {level}</span>
-                                    <span className="text-xs text-genz-textDim font-bold">{currentLevelProgress} / {xpForNextLevel} XP</span>
+                                    <div className="flex flex-col items-start">
+                                        <span className="text-genz-aqua font-black text-xl uppercase tracking-widest leading-none">Level {level}</span>
+                                        <span className="text-[10px] text-genz-textDim font-bold uppercase mt-1">Status: {level >= 5 ? 'Grandmaster' : 'Prospective'}</span>
+                                    </div>
+                                    <span className="text-right flex flex-col items-end">
+                                        <span className="text-xs text-genz-textDim font-bold">{currentLevelProgress} / {xpForNextLevel} XP</span>
+                                        <span className="text-[10px] text-genz-aqua font-black">{Math.round((currentLevelProgress / xpForNextLevel) * 100)}%</span>
+                                    </span>
                                 </div>
-                                <div className="w-full h-3 bg-black/40 rounded-full overflow-hidden border border-white/10 relative">
+                                <div className="w-full h-4 bg-white/10 rounded-full overflow-hidden border border-white/20 relative shadow-inner">
                                     <div
-                                        className="h-full bg-gradient-to-r from-genz-purple to-genz-pink transition-all duration-1000 ease-out"
-                                        style={{ width: `${currentLevelProgress}%` }}
-                                    ></div>
+                                        className="h-full bg-gradient-to-r from-genz-aqua via-genz-purple to-genz-pink shadow-[0_0_20px_rgba(154,125,230,0.6)] relative transition-all duration-1000 ease-out"
+                                        style={{ width: `${(currentLevelProgress / xpForNextLevel) * 100}%` }}
+                                    >
+                                        {/* Bright leading edge for visibility */}
+                                        <div className="absolute right-0 top-0 bottom-0 w-1 bg-white/80 shadow-[0_0_10px_#fff]"></div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -2069,9 +2084,10 @@ const App = () => {
 
                         <button
                             onClick={handleLogout}
-                            className="w-full bg-red-600/50 text-white py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-red-600 transition-all flex items-center justify-center gap-2 border border-red-600/30"
+                            disabled={isLoading}
+                            className={`w-full bg-red-600/50 text-white py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-red-600 transition-all flex items-center justify-center gap-2 border border-red-600/30 ${isLoading ? 'opacity-70 cursor-wait' : ''}`}
                         >
-                            Log Out
+                            {isLoading ? <><Icons.Spinner /> Logging out...</> : 'Log Out'}
                         </button>
 
                         {/* LEVEL UP MODAL */}
