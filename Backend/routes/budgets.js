@@ -6,7 +6,7 @@ const auth = require('../middleware/auth');
 // Get all budgets for logged-in user
 router.get('/', auth, async (req, res) => {
     try {
-        const budgets = await Budget.find({ userId: req.user.id }).sort({ createdAt: -1 });
+        const budgets = await Budget.find({ userId: req.user }).sort({ createdAt: -1 });
         res.json(budgets);
     } catch (err) {
         console.error('Error fetching budgets:', err);
@@ -24,7 +24,7 @@ router.post('/', auth, async (req, res) => {
         }
 
         const budget = new Budget({
-            userId: req.user.id,
+            userId: req.user,
             category,
             amount,
             period,
@@ -49,7 +49,7 @@ router.delete('/:id', auth, async (req, res) => {
             return res.status(404).json({ message: 'Budget not found' });
         }
 
-        if (budget.userId.toString() !== req.user.id) {
+        if (budget.userId.toString() !== req.user) {
             return res.status(403).json({ message: 'Not authorized' });
         }
 

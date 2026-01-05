@@ -17,7 +17,29 @@ const GENZ_COLORS = {
     shadowHover: '#D77AA850', // Pink light shadow
 };
 
-const COLORS = [GENZ_COLORS.pink, GENZ_COLORS.purple, GENZ_COLORS.aqua, GENZ_COLORS.textDim, '#4ade80', '#ffffff'];
+const COLORS = [
+    GENZ_COLORS.pink,   // #D77AA8
+    GENZ_COLORS.purple, // #8e7db9ff
+    GENZ_COLORS.aqua,   // #4AA8C6
+    '#4ade80',          // Green
+    '#FACC15',          // Yellow
+    '#FB923C',          // Orange
+    '#ef4444',          // Red
+    '#2DD4BF',          // Teal
+    '#818CF8',          // Indigo
+    '#E879F9',          // Fuchsia
+    '#22D3EE',          // Cyan
+    '#34D399',          // Emerald
+    '#FB7185',          // Rose
+    '#A78BFA',          // Violet
+    '#38BDF8',          // Sky
+    '#FBBF24',          // Amber
+    '#A3E635',          // Lime
+    '#ffffff'           // White (Last resort)
+];
+
+// Shift the colors for Income so they look distinct from Expenses
+const INCOME_COLORS = [...COLORS.slice(9), ...COLORS.slice(0, 9)];
 
 // --- STYLES & FONTS ---
 const fontStyle = `
@@ -67,11 +89,11 @@ body {
 /* Notification Animation */
 @keyframes slide-down {
     from {
-        transform: translate(-50%, -150%);
+        transform: translateY(-150%);
         opacity: 0;
     }
     to {
-        transform: translate(-50%, 0);
+        transform: translateY(0);
         opacity: 1;
     }
 }
@@ -157,7 +179,7 @@ const Icons = {
 };
 
 // --- MINI CALENDAR COMPONENT ---
-const MiniCalendar = ({ startDate, endDate, onSelectRange, accentColor = 'genz-aqua' }) => {
+const MiniCalendar = ({ startDate, endDate, onSelectRange, accentColor = 'genz-aqua', disablePast = false }) => {
     const [viewDate, setViewDate] = useState(new Date(startDate || new Date()));
 
     // Shorter month names for mobile
@@ -174,13 +196,26 @@ const MiniCalendar = ({ startDate, endDate, onSelectRange, accentColor = 'genz-a
     const totalDays = daysInMonth(month, year);
     const startDay = firstDayOfMonth(month, year);
 
+    // Current date for comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const days = [];
     for (let i = 0; i < startDay; i++) days.push(null);
     for (let i = 1; i <= totalDays; i++) days.push(i);
 
+    const formatDateLocal = (y, m, d) => {
+        const mm = String(m + 1).padStart(2, '0');
+        const dd = String(d).padStart(2, '0');
+        return `${y}-${mm}-${dd}`;
+    };
+
     const handleDayClick = (day) => {
         if (!day) return;
-        const clickedDateStr = new Date(year, month, day).toISOString().split('T')[0];
+        const clickedDate = new Date(year, month, day);
+        if (disablePast && clickedDate < today) return;
+
+        const clickedDateStr = formatDateLocal(year, month, day);
 
         if (!startDate || clickedDateStr < startDate || (startDate && endDate)) {
             onSelectRange(clickedDateStr, null);
@@ -193,19 +228,19 @@ const MiniCalendar = ({ startDate, endDate, onSelectRange, accentColor = 'genz-a
 
     const isStart = (day) => {
         if (!day) return false;
-        const dStr = new Date(year, month, day).toISOString().split('T')[0];
+        const dStr = formatDateLocal(year, month, day);
         return dStr === startDate;
     };
 
     const isEnd = (day) => {
         if (!day) return false;
-        const dStr = new Date(year, month, day).toISOString().split('T')[0];
+        const dStr = formatDateLocal(year, month, day);
         return dStr === endDate;
     };
 
     const isInRange = (day) => {
         if (!day || !startDate || !endDate) return false;
-        const dStr = new Date(year, month, day).toISOString().split('T')[0];
+        const dStr = formatDateLocal(year, month, day);
         return dStr > startDate && dStr < endDate;
     };
 
@@ -234,17 +269,42 @@ const MiniCalendar = ({ startDate, endDate, onSelectRange, accentColor = 'genz-a
                     const active = isStart(day) || isEnd(day);
                     const range = isInRange(day);
 
+                    let isPast = false;
+                    if (day && disablePast) {
+                        const d = new Date(year, month, day);
+                        if (d < today) isPast = true;
+                    }
+
+                    // Map accentColor to specific Tailwind classes to ensure they are built correctly
+                    const colors = {
+                        'genz-aqua': {
+                            bg: 'bg-[#4AA8C6]',
+                            text: 'text-[#4AA8C6]',
+                            range: 'bg-[#4AA8C6]/20',
+                            shadow: 'shadow-[0_0_15px_rgba(74,168,198,0.6)]'
+                        },
+                        'green-500': {
+                            bg: 'bg-green-500',
+                            text: 'text-green-500',
+                            range: 'bg-green-500/20',
+                            shadow: 'shadow-[0_0_15px_rgba(34,197,94,0.6)]'
+                        }
+                    };
+
+                    const activeColors = colors[accentColor] || colors['genz-aqua'];
+
                     return (
                         <button
                             key={idx}
                             type="button"
-                            disabled={!day}
+                            disabled={!day || isPast}
                             onClick={() => handleDayClick(day)}
                             className={`
                                 aspect-square text-[9px] font-bold rounded-lg transition-all flex items-center justify-center
                                 ${!day ? 'invisible' : ''}
-                                ${active ? `bg-${accentColor} text-white scale-105 shadow-md shadow-${accentColor}/40 z-10` :
-                                    range ? `bg-${accentColor}/20 text-${accentColor}` : 'text-genz-textDim hover:bg-genz-borderDark hover:text-white'
+                                ${isPast ? 'opacity-20 cursor-not-allowed' :
+                                    active ? `${activeColors.bg} text-white scale-105 shadow-md ${activeColors.shadow} z-10` :
+                                        range ? `${activeColors.range} ${activeColors.text}` : 'text-genz-textDim hover:bg-genz-borderDark hover:text-white'
                                 }
                             `}
                         >
@@ -388,26 +448,38 @@ const ACHIEVEMENTS = [
 ];
 
 // --- CategoryLegend for Analytics (Compact 2-column for all devices) ---
-const CategoryLegend = ({ data, highlightName }) => (
+// --- CategoryLegend for Analytics (Compact 2-column for all devices) ---
+const CategoryLegend = ({ data, highlightName, palette = COLORS, onHover }) => (
     <div className="mt-8 grid grid-cols-2 gap-x-2 gap-y-3 text-[11px] sm:text-sm">
-        {data.map((entry, index) => (
-            <div
-                key={`legend - ${index} `}
-                className={`flex items - center gap - 1.5 transition - all overflow - hidden ${entry.name === highlightName ? 'bg-genz-dark/50 p-1.5 rounded-xl border border-genz-pink/50 shadow-lg' : ''} `}
-            >
+        {data.map((entry, index) => {
+            const color = palette[index % palette.length];
+            const isHighlighted = entry.name === highlightName;
+
+            return (
                 <div
-                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                />
-                <span className="text-genz-textDim flex-shrink-0">{entry.emoji}</span>
-                <span className={`font - medium flex - 1 truncate ${entry.name === highlightName ? 'text-genz-pink' : 'text-genz-textLight'} `}>
-                    {entry.name}
-                </span>
-                <span className="text-genz-textDim font-mono text-[10px] flex-shrink-0 ml-auto">
-                    ₦{entry.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                </span>
-            </div>
-        ))}
+                    key={`legend-${index}`}
+                    onMouseEnter={() => onHover && onHover(entry.name)}
+                    onClick={() => onHover && onHover(entry.name)}
+                    className={`flex items-center gap-1.5 transition-all overflow-hidden cursor-pointer ${isHighlighted ? 'bg-genz-dark/50 p-1.5 rounded-xl border shadow-lg' : 'hover:bg-white/5 p-1.5 rounded-xl border border-transparent'}`}
+                    style={{ borderColor: isHighlighted ? `${color}80` : 'transparent' }} // 80 is roughly 50% opacity
+                >
+                    <div
+                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: color }}
+                    />
+                    <span className="text-genz-textDim flex-shrink-0">{entry.emoji}</span>
+                    <span
+                        className="font-medium flex-1 truncate transition-colors"
+                        style={{ color: isHighlighted ? color : '#E6E7EB' }} // #E6E7EB is textLight
+                    >
+                        {entry.name}
+                    </span>
+                    <span className="text-genz-textDim font-mono text-[10px] flex-shrink-0 ml-auto">
+                        ₦{entry.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </span>
+                </div>
+            );
+        })}
     </div>
 );
 
@@ -422,12 +494,12 @@ const Confetti = () => {
                     key={i}
                     className="absolute top-[-20px] animate-fall"
                     style={{
-                        left: `${Math.random() * 100} vw`,
-                        animationDuration: `${Math.random() * 3 + 2} s`,
-                        animationDelay: `${Math.random() * 2} s`,
+                        left: `${Math.random() * 100}vw`,
+                        animationDuration: `${Math.random() * 3 + 2}s`,
+                        animationDelay: `${Math.random() * 2}s`,
                         backgroundColor: colors[Math.floor(Math.random() * colors.length)],
-                        width: `${Math.random() * 10 + 5} px`,
-                        height: `${Math.random() * 10 + 5} px`,
+                        width: `${Math.random() * 10 + 5}px`,
+                        height: `${Math.random() * 10 + 5}px`,
                         transform: `rotate(${Math.random() * 360}deg)`,
                     }}
                 />
@@ -555,12 +627,12 @@ const Homepage = ({ onStart }) => {
                     {features.map((f, i) => (
                         <div
                             key={i}
-                            className={`${f.color} backdrop - blur - md border p - 8 lg: p - 10 rounded - [2rem] lg: rounded - [2.5rem] group hover: scale - [1.02] transition - all flex flex - col items - center`}
+                            className={`${f.color} backdrop-blur-md border p-8 lg:p-10 rounded-[2rem] lg:rounded-[2.5rem] group hover:scale-[1.02] transition-all flex flex-col items-center text-center`}
                         >
                             <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-2xl flex items-center justify-center text-2xl lg:text-3xl mb-6 lg:mb-8 bg-black/40 group-hover:rotate-6 transition-transform shadow-lg">
                                 {f.emoji}
                             </div>
-                            <h3 className="text-xl lg:text-2xl font-black mb-3 lg:mb-4 group-hover:text-genz-aqua transition-colors">{f.title}</h3>
+                            <h3 className="text-xl lg:text-2xl font-black mb-3 lg:mb-4 group-hover:text-genz-aqua transition-colors whitespace-nowrap">{f.title}</h3>
                             <p className="text-genz-textDim text-sm lg:text-base font-medium leading-relaxed">
                                 {f.desc}
                             </p>
@@ -574,6 +646,15 @@ const Homepage = ({ onStart }) => {
 
 const App = () => {
     const [currentPage, setCurrentPage] = useState('home');
+
+    // Helper to format date as YYYY-MM-DD in local time
+    const formatDate = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     const [user, setUser] = useState(null);
     const [transactions, setTransactions] = useState([]);
     const [editingTransaction, setEditingTransaction] = useState(null);
@@ -589,11 +670,19 @@ const App = () => {
     const [budgetCategory, setBudgetCategory] = useState('');
     const [budgetAmount, setBudgetAmount] = useState('');
     const [budgetPeriod, setBudgetPeriod] = useState('weekly'); // 'weekly' or 'monthly'
-    const [budgetStartDate, setBudgetStartDate] = useState(new Date().toISOString().split('T')[0]);
-    const [budgetEndDate, setBudgetEndDate] = useState(() => {
+    const [budgetStartDate, setBudgetStartDate] = useState(() => {
         const d = new Date();
-        d.setDate(d.getDate() + 7);
-        return d.toISOString().split('T')[0];
+        const day = d.getDay(); // 0 is Sunday
+        const diff = d.getDate() - day; // Adjust to last Sunday
+        const startOfWeek = new Date(d.setDate(diff));
+        return formatDate(startOfWeek);
+    });
+    const [budgetEndDate, setBudgetEndDate] = useState(() => {
+        const d = new Date(); // Reset to now
+        const day = d.getDay();
+        const diff = d.getDate() - day + 6; // Adjust to coming Saturday
+        const endOfWeek = new Date(d.setDate(diff));
+        return formatDate(endOfWeek);
     });
     const [showCalendar, setShowCalendar] = useState(false);
 
@@ -606,7 +695,10 @@ const App = () => {
     const [savingsStartDate, setSavingsStartDate] = useState(new Date().toISOString().split('T')[0]);
     const [savingsEndDate, setSavingsEndDate] = useState(() => {
         const d = new Date();
-        return new Date(d.getFullYear(), d.getMonth() + 1, d.getDate()).toISOString().split('T')[0];
+        // Monthly = 1 month inclusive (Today + 1 month - 1 day)
+        d.setMonth(d.getMonth() + 1);
+        d.setDate(d.getDate() - 1);
+        return formatDate(d);
     });
     const [showSavingsCalendar, setShowSavingsCalendar] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
@@ -615,23 +707,26 @@ const App = () => {
     const [selectedAchievement, setSelectedAchievement] = useState(null);
     const [unlockedAchievements, setUnlockedAchievements] = useState([]);
 
-    // --- NOTIFICATION STATE ---
-    const [notification, setNotification] = useState(null);
-    const notificationTimeoutRef = useRef(null);
+    // --- NOTIFICATION QUEUE SYSTEM ---
+    const [notificationQueue, setNotificationQueue] = useState([]);
 
-    // Helper function to show notifications
+    // Helper function to show notifications (Queued)
     const showNotification = (message, type = 'info', duration = 3000) => {
-        // Clear any existing timer to prevent flickering or early clearing
-        if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
-
-        setNotification({ message, type });
-        notificationTimeoutRef.current = setTimeout(() => {
-            setNotification(null);
-            notificationTimeoutRef.current = null;
-        }, duration);
+        const id = Date.now() + Math.random();
+        setNotificationQueue(prev => [...prev, { id, message, type, duration }]);
     };
 
-    // Centralized API error handler
+    // Process the notification queue
+    useEffect(() => {
+        if (notificationQueue.length > 0) {
+            const current = notificationQueue[0];
+            const timer = setTimeout(() => {
+                setNotificationQueue(prev => prev.filter(n => n.id !== current.id));
+            }, current.duration);
+            return () => clearTimeout(timer);
+        }
+    }, [notificationQueue]);
+
     // Centralized API error handler
     const handleApiError = (err, defaultMsg = 'Action failed') => {
         console.error('API Error:', err);
@@ -660,13 +755,25 @@ const App = () => {
     const xpForNextLevel = 100;
     const currentLevelProgress = xp % 100;
 
-    const gainXp = (amount) => {
+    const gainXp = async (amount) => {
+        if (!user) return;
         const currentLevel = Math.floor(xp / 100) + 1;
-        const newXp = xp + amount;
+        const newXp = Math.max(0, xp + amount);
         const newLevel = Math.floor(newXp / 100) + 1;
 
         setXp(newXp);
-        localStorage.setItem('spendsave_xp', newXp.toString());
+
+        // Update Local Session & State immediately
+        const updatedUser = { ...user, xp: newXp };
+        setUser(updatedUser);
+        sessionStorage.setItem('spendsave_user', JSON.stringify(updatedUser));
+
+        // Sync with Server (Persistent across devices)
+        try {
+            await api.updateProfile({ xp: newXp });
+        } catch (e) {
+            console.error('Failed to sync XP', e);
+        }
 
         if (newLevel > currentLevel) {
             setShowLevelUp(true);
@@ -680,29 +787,21 @@ const App = () => {
 
     // 1. Initial Session Load
     useEffect(() => {
-        // Load XP
-        const savedXp = localStorage.getItem('spendsave_xp');
-        if (savedXp) setXp(parseInt(savedXp, 10));
-
-        // Load Achievements
-        const savedAchievements = localStorage.getItem('spendsave_achievements');
-        if (savedAchievements) {
-            try {
-                setUnlockedAchievements(JSON.parse(savedAchievements));
-            } catch (e) { console.error('Failed to parse achievements', e); }
-        }
-
-        const savedUser = sessionStorage.getItem('spendsave_user');
+        const savedUserJson = sessionStorage.getItem('spendsave_user');
         const token = sessionStorage.getItem('spendsave_token');
 
-        if (savedUser && token) {
-            setUser(JSON.parse(savedUser));
+        if (savedUserJson && token) {
+            const parsedUser = JSON.parse(savedUserJson);
+            setUser(parsedUser);
             setCurrentPage('dashboard');
+
+            // Load XP & Achievements from the User object (Sync from DB)
+            setXp(parsedUser.xp || 0);
+            setUnlockedAchievements(parsedUser.achievements || []);
         } else {
-            // no token: clear any old local storage data
             localStorage.removeItem('spendsave_transactions');
         }
-    }, []);
+    }, [setUser, setXp, setUnlockedAchievements]);
 
     // 2. Data Fetching (Whenever user state changes)
     useEffect(() => {
@@ -755,10 +854,19 @@ const App = () => {
         const newlyUnlocked = currentlyUnlocked.filter(id => !unlockedAchievements.includes(id));
 
         if (newlyUnlocked.length > 0) {
-            // Update the list of unlocked achievements and persist
             const nextUnlocked = [...unlockedAchievements, ...newlyUnlocked];
             setUnlockedAchievements(nextUnlocked);
-            localStorage.setItem('spendsave_achievements', JSON.stringify(nextUnlocked));
+
+            // Sync achievements with Server
+            if (user) {
+                // Update Local Session & State
+                const updatedUser = { ...user, achievements: nextUnlocked };
+                setUser(updatedUser);
+                sessionStorage.setItem('spendsave_user', JSON.stringify(updatedUser));
+
+                api.updateProfile({ achievements: nextUnlocked })
+                    .catch(e => console.error('Failed to sync achievements', e));
+            }
 
             // Celebrate each newly unlocked achievement
             newlyUnlocked.forEach((achievementId, index) => {
@@ -776,7 +884,7 @@ const App = () => {
                         );
 
                         // Award XP for unlocking achievement
-                        gainXp(25);
+                        gainXp(15);
                     }, index * 500);
                 }
             });
@@ -807,18 +915,14 @@ const App = () => {
                 res = await api.login(email, password);
             }
 
-            console.log('Auth response:', res);
-            if (!res || !res.token) {
-                console.warn('No token returned from auth response', res);
-            }
-
-            // res: { token, user }
             if (res && res.token) {
                 sessionStorage.setItem('spendsave_token', res.token);
             }
             // FIX: Ensure the user object being saved to storage/state contains username
             sessionStorage.setItem('spendsave_user', JSON.stringify(res.user));
             setUser(res.user);
+            setXp(res.user.xp || 0);
+            setUnlockedAchievements(res.user.achievements || []);
             setCurrentPage('dashboard');
 
             if (authMode === 'signup') {
@@ -843,6 +947,12 @@ const App = () => {
             sessionStorage.removeItem('spendsave_token');
             sessionStorage.removeItem('spendsave_user');
             setUser(null);
+            setXp(0);
+            setTransactions([]);
+            setBudgets([]);
+            setSavingsGoals([]);
+            setUnlockedAchievements([]);
+            setNotificationQueue([]);
             setCurrentPage('login');
             // Security: Clear auth inputs
             setEmail('');
@@ -890,9 +1000,9 @@ const App = () => {
         e.preventDefault();
         if (!budgetCategory || !budgetAmount) return showNotification("Please select a category and amount!", 'warning');
 
-        // CHECK FOR DUPLICATE TARGET
-        if (budgets.some(b => b.category === budgetCategory)) {
-            return showNotification(`⚠️ A target for "${budgetCategory}" already exists! Please delete the old one first.`, 'warning', 4000);
+        // CHECK FOR DUPLICATE TARGET (Same Category AND Same Period)
+        if (budgets.some(b => b.category === budgetCategory && b.period === budgetPeriod)) {
+            return showNotification(`⚠️ A ${budgetPeriod} target for "${budgetCategory}" already exists!`, 'warning', 4000);
         }
 
         setIsLoading(true);
@@ -910,10 +1020,10 @@ const App = () => {
             setBudgetCategory('');
             setBudgetAmount('');
             setBudgetPeriod('weekly');
-            setBudgetStartDate(new Date().toISOString().split('T')[0]);
+            setBudgetStartDate(formatDate(new Date()));
             const nextWeek = new Date();
-            nextWeek.setDate(nextWeek.getDate() + 7);
-            setBudgetEndDate(nextWeek.toISOString().split('T')[0]);
+            nextWeek.setDate(nextWeek.getDate() + 6);
+            setBudgetEndDate(formatDate(nextWeek));
             setShowCalendar(false);
 
             const periodLabel = budgetPeriod.charAt(0).toUpperCase() + budgetPeriod.slice(1);
@@ -935,6 +1045,115 @@ const App = () => {
         setSavingsEndDate(end);
     };
 
+    // --- AUTOMATIC BUDGET CLEANUP & REWARDS ---
+    useEffect(() => {
+        if (!budgets.length || !user) return; // Wait for data
+
+        const checkAndProcessExpired = async () => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Midnight today
+
+            // Find expired budgets
+            const expiredBudgets = budgets.filter(b => {
+                const endDate = new Date(b.endDate);
+                endDate.setHours(0, 0, 0, 0);
+                return endDate < today; // Strictly past
+            });
+
+            if (expiredBudgets.length === 0) return;
+
+            // 1. Delete from Backend immediately to prevent re-processing
+            const deletePromises = expiredBudgets.map(b => api.deleteBudget(b._id || b.id).catch(e => console.error("Auto-delete failed", e)));
+            await Promise.all(deletePromises);
+
+            // 2. Update Local State (Remove expired)
+            const expiredIds = expiredBudgets.map(b => b._id || b.id);
+            setBudgets(prev => prev.filter(b => !expiredIds.includes(b._id || b.id)));
+
+            // 3. Queue Notifications & Rewards (Staggered)
+            expiredBudgets.forEach((budget, index) => {
+                const delay = index * 4500; // 4.5s delay between messages
+
+                setTimeout(() => {
+                    const spent = calculateBudgetProgress(budget.category, budget, transactions);
+                    const isSuccess = spent <= budget.amount;
+
+                    if (isSuccess) {
+                        setShowConfetti(true);
+                        setTimeout(() => setShowConfetti(false), 3000);
+                        gainXp(50); // Big XP Reward!
+                        showNotification(
+                            `🏆 Budget Goal Achieved!\n\nYou successfully stuck to your ${budget.category} budget.\nTarget: ₦${budget.amount.toLocaleString()}\nSpent: ₦${spent.toLocaleString()}`,
+                            "success",
+                            6000
+                        );
+                    }
+                    // Failure case is silent (as requested, since user already got an alert when they exceeded)
+                }, delay);
+            });
+        };
+
+        checkAndProcessExpired();
+        // We depend on budgets.length to trigger initially, but we don't want to infinite loop.
+        // The setBudgets inside will trigger re-render, but filtering expired won't find any next time.
+        // We include transactions to ensure progress calc is accurate.
+    }, [budgets, transactions, user]);
+
+    // --- AUTOMATIC SAVINGS GOAL CLEANUP ---
+    useEffect(() => {
+        if (!savingsGoals.length || !user) return;
+
+        const checkAndProcessExpiredGoals = async () => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const expiredGoals = savingsGoals.filter(g => {
+                if (!g.endDate) return false;
+                const endDate = new Date(g.endDate);
+                endDate.setHours(0, 0, 0, 0);
+                return endDate < today;
+            });
+
+            if (expiredGoals.length === 0) return;
+
+            // 1. Delete from Backend
+            const deletePromises = expiredGoals.map(g => api.deleteSavingsGoal(g._id || g.id).catch(e => console.error("Auto-delete goal failed", e)));
+            await Promise.all(deletePromises);
+
+            // 2. Update Local State
+            const expiredIds = expiredGoals.map(g => g._id || g.id);
+            setSavingsGoals(prev => prev.filter(g => !expiredIds.includes(g._id || g.id)));
+
+            // 3. Notifications (Staggered)
+            expiredGoals.forEach((goal, index) => {
+                const delay = index * 4500;
+                setTimeout(() => {
+                    const saved = calculateSavingsProgress(goal.category, goal);
+                    const isSuccess = saved >= goal.amount;
+
+                    if (isSuccess) {
+                        setShowConfetti(true);
+                        setTimeout(() => setShowConfetti(false), 3000);
+                        gainXp(50);
+                        showNotification(
+                            `💎 Savings Goal Achieved!\n\nTarget reached for ${goal.category}.\nGoal: ₦${goal.amount.toLocaleString()}\nSaved: ₦${saved.toLocaleString()}`,
+                            "success",
+                            6000
+                        );
+                    } else {
+                        showNotification(
+                            `Savings Period Ended: ${goal.category}\nYou didn't quite reach your goal of ₦${goal.amount.toLocaleString()}. Keep pushing! 🚀`,
+                            "info",
+                            5000
+                        );
+                    }
+                }, delay);
+            });
+        };
+
+        checkAndProcessExpiredGoals();
+    }, [savingsGoals, transactions, user]);
+
     const handleDeleteBudget = async (id) => {
         try {
             await api.deleteBudget(id);
@@ -945,7 +1164,7 @@ const App = () => {
         }
     };
 
-    const calculateBudgetProgress = (category, budget) => {
+    const calculateBudgetProgress = (category, budget, txList = transactions) => {
         if (!budget) return 0;
 
         const now = new Date();
@@ -971,7 +1190,7 @@ const App = () => {
         }
 
         // Calculate total spent in this category within current period
-        const spent = transactions
+        const spent = txList
             .filter(t => {
                 const txDate = new Date(t.createdAt);
                 return t.type === 'expense' &&
@@ -988,18 +1207,27 @@ const App = () => {
         e.preventDefault();
         if (!savingsCategory || !savingsAmount) return showNotification("Please select a category and amount!", 'warning');
 
-        // CHECK FOR DUPLICATE GOAL
-        if (savingsGoals.some(g => g.category === savingsCategory)) {
-            return showNotification(`⚠️ A goal for "${savingsCategory}" already exists! Please delete the old one first.`, 'warning', 4000);
+        // CHECK FOR DUPLICATE GOAL (Same Category AND Same Period)
+        if (savingsGoals.some(g => g.category === savingsCategory && g.period === savingsPeriod)) {
+            return showNotification(`⚠️ A ${savingsPeriod} goal for "${savingsCategory}" already exists!`, 'warning', 4000);
         }
 
         setIsLoading(true);
         try {
+            // "Start from Now" Logic:
+            // If the user selected start date is TODAY (YYYY-MM-DD), we use the current exact timestamp.
+            // This ensures we don't count transactions from earlier this morning.
+            // If they selected a Custom past date, we respect that date (midnight).
+            const todayStr = formatDate(new Date());
+            const finalStartDate = savingsStartDate === todayStr
+                ? new Date().toISOString()
+                : savingsStartDate;
+
             const newGoal = {
                 category: savingsCategory,
                 amount: parseFloat(savingsAmount),
                 period: savingsPeriod,
-                startDate: savingsStartDate,
+                startDate: finalStartDate,
                 endDate: savingsEndDate,
                 emoji: INCOME_CATEGORIES.find(c => c.name === savingsCategory)?.emoji || '💰'
             };
@@ -1012,8 +1240,11 @@ const App = () => {
             setSavingsAmount('');
             setSavingsPeriod('monthly');
             const now = new Date();
-            const startStr = now.toISOString().split('T')[0];
-            const endStr = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate()).toISOString().split('T')[0];
+            const startStr = formatDate(now);
+            const endD = new Date(now);
+            endD.setMonth(endD.getMonth() + 1);
+            endD.setDate(endD.getDate() - 1);
+            const endStr = formatDate(endD);
             setSavingsStartDate(startStr);
             setSavingsEndDate(endStr);
             setShowSavingsCalendar(false);
@@ -1033,8 +1264,14 @@ const App = () => {
             setSavingsGoals(savingsGoals.filter(g => (g._id || g.id) !== id));
             showNotification("Goal deleted!", "info");
         } catch (err) {
-            console.error('Goal deletion error:', err);
-            showNotification("Failed to delete goal.", "error");
+            // If 404, the goal was already deleted (likely by auto-cleanup), so just update UI
+            if (err.status === 404) {
+                setSavingsGoals(savingsGoals.filter(g => (g._id || g.id) !== id));
+                showNotification("Goal deleted!", "info");
+            } else {
+                console.error('Goal deletion error:', err);
+                showNotification("Failed to delete goal.", "error");
+            }
         }
     };
 
@@ -1086,6 +1323,7 @@ const App = () => {
                 const normalizedCreated = { ...created, id: created._id || created.id };
                 // prepend to state
                 updatedTxs = [normalizedCreated, ...transactions];
+                gainXp(2); // Award XP for new transaction
             }
 
             // Update state and reset form
@@ -1097,10 +1335,40 @@ const App = () => {
             setNote('');
             setTransactionType('expense');
 
+            setTransactionType('expense');
+
             // Show success notification with confetti for new transactions
             if (!editingTransaction) {
                 setShowConfetti(true);
                 setTimeout(() => setShowConfetti(false), 3000);
+
+                // Check if this expense pushed any budget over the limit
+                if (payload.type === 'expense') {
+                    const activeBudget = budgets.find(b =>
+                        b.category === payload.category &&
+                        new Date(b.startDate) <= new Date(payload.createdAt) &&
+                        new Date(b.endDate) >= new Date(payload.createdAt)
+                    );
+
+                    if (activeBudget) {
+                        // Recalculate including the new transaction we just added to local state
+                        // We use updatedTxs because setTransactions hasn't triggered a re-render yet
+                        const totalSpent = updatedTxs
+                            .filter(t =>
+                                t.type === 'expense' &&
+                                t.category === activeBudget.category &&
+                                new Date(t.createdAt) >= new Date(activeBudget.startDate) &&
+                                new Date(t.createdAt) <= new Date(activeBudget.endDate)
+                            )
+                            .reduce((sum, t) => sum + t.amount, 0);
+
+                        if (totalSpent >= activeBudget.amount) {
+                            setTimeout(() => {
+                                showNotification(`⚠️ Alert: You've hit your ${activeBudget.category} budget!`, 'warning', 5000);
+                            }, 1000); // Delay slightly so it appears after the success message
+                        }
+                    }
+                }
             }
 
             showNotification(
@@ -1110,31 +1378,8 @@ const App = () => {
                 'success'
             );
 
-            // GAMIFICATION: Award XP
-            if (!editingTransaction) {
-                gainXp(10); // +10 XP for new transaction
-            }
+            // Savings Goal Progress check is handled below correctly...
 
-            // NEW: Check for budget overspending
-            if (transactionType === 'expense') {
-                const spendingBudget = budgets.find(b => b.category === finalCategory);
-                if (spendingBudget) {
-                    const budget = budgets.find(b => b.category === finalCategory);
-                    const currentSpent = budget ? calculateBudgetProgress(finalCategory, budget) : 0;
-                    // Note: calculateBudgetProgress is sync and based on 'transactions' state, 
-                    // which we just updated. However, React state updates are async, 
-                    // so 'transactions' might not reflect the new one yet depending on timing,
-                    // BUT 'updatedTxs' DOES have it. Let's use updatedTxs for accuracy.
-
-                    const newTotal = updatedTxs
-                        .filter(t => t.type === 'expense' && t.category === finalCategory)
-                        .reduce((sum, t) => sum + (t.amount || 0), 0);
-
-                    if (newTotal > spendingBudget.amount) {
-                        showNotification(`Alert: You have exceeded your ${finalCategory} target!\nTarget: ₦${spendingBudget.amount.toLocaleString()} \nSpent: ₦${newTotal.toLocaleString()} `, 'warning', 5000);
-                    }
-                }
-            }
 
             // NEW: Check for Savings Goal Achievement
             if (transactionType === 'income') {
@@ -1155,7 +1400,7 @@ const App = () => {
 
                         setTimeout(() => {
                             showNotification(`Congratulations!\n\nYou've reached your savings goal for ${finalCategory}!\nGoal: ₦${savingGoal.amount.toLocaleString()}\nSaved: ₦${newTotal.toLocaleString()}`, 'success', 6000);
-                            gainXp(100); // +100 XP for hitting a goal
+                            gainXp(50); // +50 XP for hitting a goal
                         }, 500);
                     }
                 }
@@ -1178,6 +1423,7 @@ const App = () => {
             setTransactions(transactions.filter(t => (t._id || t.id) !== id));
             setCurrentPage('dashboard');
             showNotification('Transaction deleted successfully!', 'success');
+            gainXp(-2); // Deduct XP for deleting a transaction
         } catch (err) {
             handleApiError(err, 'Failed to delete transaction');
         }
@@ -1220,8 +1466,18 @@ const App = () => {
                 return getStreak() >= 30;
             case 'budget_master':
                 return budgets.some(b => {
+                    // Only count budgets that have ended
+                    if (!b.endDate) return false;
+                    const endDate = new Date(b.endDate);
+                    endDate.setHours(23, 59, 59, 999); // End of day
+                    const now = new Date();
+
+                    // Budget period must have ended
+                    if (now <= endDate) return false;
+
+                    // Check if you stayed within budget
                     const spent = calculateBudgetProgress(b.category, b);
-                    return spent < b.amount;
+                    return spent <= b.amount && spent > 0; // Must have spent something but stayed within limit
                 });
             case 'level_5':
                 return level >= 5;
@@ -1315,12 +1571,13 @@ const App = () => {
         <>
             <style>{fontStyle}</style>
 
-            {/* Notification Component */}
-            {notification && (
+            {/* Notification Component (Queue Display) */}
+            {notificationQueue.length > 0 && (
                 <Notification
-                    message={notification.message}
-                    type={notification.type}
-                    onClose={() => setNotification(null)}
+                    key={notificationQueue[0].id}
+                    message={notificationQueue[0].message}
+                    type={notificationQueue[0].type}
+                    onClose={() => setNotificationQueue(prev => prev.slice(1))}
                 />
             )}
 
@@ -1516,10 +1773,10 @@ const App = () => {
                                 </div>
                             )}
                         </div>
-                    </div >
+                    </div>
 
                     {/* Floating Action Button */}
-                    < button
+                    <button
                         onClick={() => {
                             setEditingTransaction(null);
                             setTransactionType('expense');
@@ -1532,8 +1789,8 @@ const App = () => {
                         className="fixed bottom-28 right-6 bg-genz-pink text-black w-16 h-16 rounded-2xl shadow-genz-purple-brutalist flex items-center justify-center hover:translate-y-1 hover:shadow-none transition-all z-50 border-2 border-genz-purple"
                     >
                         <Icons.Plus />
-                    </button >
-                </div >
+                    </button>
+                </div>
             )}
 
             {/* Add Transaction (Unchanged) */}
@@ -1620,8 +1877,8 @@ const App = () => {
                                 />
                             )}
 
-                            <div>
-                                <label className="text-genz-purple text-xs font-bold uppercase tracking-widest mb-2 block ml-2">Note (optional) </label>
+                            <div className="mt-12">
+                                <label className="text-genz-purple text-xs font-bold uppercase tracking-widest mb-3 block ml-2">Note (optional) </label>
                                 <textarea
                                     value={note}
                                     onChange={(e) => setNote(e.target.value)}
@@ -1703,14 +1960,14 @@ const App = () => {
                         {/* Total Income vs Total Expense Comparison (Unchanged) */}
                         <div className="grid grid-cols-2 gap-4 mb-8">
                             <div className="bg-genz-card rounded-3xl p-5 border border-genz-card relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-20 h-20 bg-genz-aqua blur-[50px] opacity-20"></div>
-                                <p className="text-genz-textDim text-xs font-bold uppercase mb-2">In</p>
-                                <p className="text-xl font-black text-genz-aqua">+₦{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                            </div>
-                            <div className="bg-genz-card rounded-3xl p-5 border border-genz-card relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-20 h-20 bg-genz-pink blur-[50px] opacity-20"></div>
                                 <p className="text-genz-textDim text-xs font-bold uppercase mb-2">Out</p>
                                 <p className="text-xl font-black text-genz-pink">-₦{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                            </div>
+                            <div className="bg-genz-card rounded-3xl p-5 border border-genz-card relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-20 h-20 bg-genz-aqua blur-[50px] opacity-20"></div>
+                                <p className="text-genz-textDim text-xs font-bold uppercase mb-2">In</p>
+                                <p className="text-xl font-black text-genz-aqua">+₦{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                             </div>
                         </div>
                         <hr className="border-genz-borderDark/50 my-6" />
@@ -1720,81 +1977,132 @@ const App = () => {
                             {/* 1. Expense Pie Chart and Biggest Spending Highlight */}
                             <div className="bg-genz-card rounded-3xl p-6 border border-genz-card">
                                 <h2 className="text-genz-textLight font-bold uppercase tracking-wider mb-6 text-sm">Expense Breakdown</h2>
-                                <ResponsiveContainer width="100%" height={250}>
-                                    <PieChart>
-                                        <Pie
-                                            data={getCategoryData()}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={60}
-                                            outerRadius={80}
-                                            paddingAngle={5}
-                                            dataKey="value"
-                                            stroke="none"
-                                        >
-                                            {getCategoryData().map((entry, index) => (
-                                                <Cell
-                                                    key={`cell-${index}`}
-                                                    fill={COLORS[index % COLORS.length]}
-                                                    stroke="none"
-                                                    onClick={() => setActiveExpenseCategory(entry.name)}
-                                                    onMouseEnter={() => setActiveExpenseCategory(entry.name)}
-                                                    onMouseLeave={() => setActiveExpenseCategory(null)}
-                                                    className="cursor-pointer transition-opacity hover:opacity-80"
-                                                />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip
-                                            contentStyle={{ backgroundColor: GENZ_COLORS.bgDark, border: `1px solid ${GENZ_COLORS.borderDark}`, borderRadius: '12px', color: GENZ_COLORS.textLight }}
-                                            itemStyle={{ color: GENZ_COLORS.textLight }}
-                                            formatter={(value) => [`₦${value.toLocaleString(undefined, { maximumFractionDigits: 0 })} (${totalExpense > 0 ? (value / totalExpense * 100).toFixed(0) : 0}%)`, 'Amount']}
-                                        />
-                                    </PieChart>
-                                </ResponsiveContainer>
+                                <div className="relative">
+                                    <ResponsiveContainer width="100%" height={250}>
+                                        <PieChart>
+                                            <Pie
+                                                data={getCategoryData()}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={60}
+                                                outerRadius={80}
+                                                paddingAngle={5}
+                                                dataKey="value"
+                                                stroke="none"
+                                            >
+                                                {getCategoryData().map((entry, index) => (
+                                                    <Cell
+                                                        key={`cell-${index}`}
+                                                        fill={COLORS[index % COLORS.length]}
+                                                        stroke="none"
+                                                        onClick={() => setActiveExpenseCategory(entry.name)}
+                                                        onMouseEnter={() => setActiveExpenseCategory(entry.name)}
+                                                        onMouseLeave={() => setActiveExpenseCategory(null)}
+                                                        className="cursor-pointer transition-all duration-300"
+                                                        style={{
+                                                            opacity: activeExpenseCategory && activeExpenseCategory !== entry.name ? 0.3 : 1,
+                                                            stroke: activeExpenseCategory === entry.name ? GENZ_COLORS.bgDark : 'none',
+                                                            strokeWidth: activeExpenseCategory === entry.name ? 2 : 0,
+                                                            transform: activeExpenseCategory === entry.name ? 'scale(1.05)' : 'scale(1)',
+                                                            transformOrigin: 'center center'
+                                                        }}
+                                                    />
+                                                ))}
+                                            </Pie>
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                    {/* Donut Center Label */}
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none p-10 text-center">
+                                        {activeExpenseCategory ? (() => {
+                                            const data = getCategoryData().find(d => d.name === activeExpenseCategory);
+                                            return data ? (
+                                                <>
+                                                    <span className="text-xs text-genz-textDim font-medium mb-1 truncate w-full">{data.emoji} {data.name}</span>
+                                                    <span className="text-xl font-black text-white">₦{data.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                                    <span className="text-xs text-genz-textDim font-medium mt-1">
+                                                        {((data.value / totalExpense) * 100).toFixed(0)}%
+                                                    </span>
+                                                </>
+                                            ) : null;
+                                        })() : (
+                                            <>
+                                                <span className="text-xs text-genz-textDim font-bold uppercase tracking-wider mb-1">Total</span>
+                                                <span className="text-xl font-black text-white">₦{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
                                 {/* Highlight the biggest spending category */}
                                 <CategoryLegend
                                     data={getCategoryData()}
                                     highlightName={activeExpenseCategory || (getCategoryData().length > 0 ? getCategoryData()[0].name : null)}
+                                    onHover={setActiveExpenseCategory}
                                 />
                             </div>
 
                             {/* 2. Income Pie Chart */}
                             <div className="bg-genz-card rounded-3xl p-6 border border-genz-card">
                                 <h2 className="text-genz-textLight font-bold uppercase tracking-wider mb-6 text-sm">Income Breakdown</h2>
-                                <ResponsiveContainer width="100%" height={250}>
-                                    <PieChart>
-                                        <Pie
-                                            data={getIncomeCategoryData()}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={60}
-                                            outerRadius={80}
-                                            paddingAngle={5}
-                                            dataKey="value"
-                                            stroke="none"
-                                        >
-                                            {getIncomeCategoryData().map((entry, index) => (
-                                                <Cell
-                                                    key={`cell-${index}`}
-                                                    fill={COLORS[index % COLORS.length]}
-                                                    stroke="none"
-                                                    onClick={() => setActiveIncomeCategory(entry.name)}
-                                                    onMouseEnter={() => setActiveIncomeCategory(entry.name)}
-                                                    onMouseLeave={() => setActiveIncomeCategory(null)}
-                                                    className="cursor-pointer transition-opacity hover:opacity-80"
-                                                />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip
-                                            contentStyle={{ backgroundColor: GENZ_COLORS.bgDark, border: `1px solid ${GENZ_COLORS.borderDark}`, borderRadius: '12px', color: GENZ_COLORS.textLight }}
-                                            itemStyle={{ color: GENZ_COLORS.textLight }}
-                                            formatter={(value) => [`₦${value.toLocaleString(undefined, { maximumFractionDigits: 0 })} (${totalIncome > 0 ? (value / totalIncome * 100).toFixed(0) : 0}%)`, 'Amount']}
-                                        />
-                                    </PieChart>
-                                </ResponsiveContainer>
+                                <div className="relative">
+                                    <ResponsiveContainer width="100%" height={250}>
+                                        <PieChart>
+                                            <Pie
+                                                data={getIncomeCategoryData()}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={60}
+                                                outerRadius={80}
+                                                paddingAngle={5}
+                                                dataKey="value"
+                                                stroke="none"
+                                            >
+                                                {getIncomeCategoryData().map((entry, index) => (
+                                                    <Cell
+                                                        key={`cell-${index}`}
+                                                        fill={INCOME_COLORS[index % INCOME_COLORS.length]}
+                                                        stroke="none"
+                                                        onClick={() => setActiveIncomeCategory(entry.name)}
+                                                        onMouseEnter={() => setActiveIncomeCategory(entry.name)}
+                                                        onMouseLeave={() => setActiveIncomeCategory(null)}
+                                                        className="cursor-pointer transition-all duration-300"
+                                                        style={{
+                                                            opacity: activeIncomeCategory && activeIncomeCategory !== entry.name ? 0.3 : 1,
+                                                            stroke: activeIncomeCategory === entry.name ? GENZ_COLORS.bgDark : 'none',
+                                                            strokeWidth: activeIncomeCategory === entry.name ? 2 : 0,
+                                                            transform: activeIncomeCategory === entry.name ? 'scale(1.05)' : 'scale(1)',
+                                                            transformOrigin: 'center center'
+                                                        }}
+                                                    />
+                                                ))}
+                                            </Pie>
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                    {/* Donut Center Label */}
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none p-10 text-center">
+                                        {activeIncomeCategory ? (() => {
+                                            const data = getIncomeCategoryData().find(d => d.name === activeIncomeCategory);
+                                            return data ? (
+                                                <>
+                                                    <span className="text-xs text-genz-textDim font-medium mb-1 truncate w-full">{data.emoji} {data.name}</span>
+                                                    <span className="text-xl font-black text-white">₦{data.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                                    <span className="text-xs text-genz-textDim font-medium mt-1">
+                                                        {((data.value / totalIncome) * 100).toFixed(0)}%
+                                                    </span>
+                                                </>
+                                            ) : null;
+                                        })() : (
+                                            <>
+                                                <span className="text-xs text-genz-textDim font-bold uppercase tracking-wider mb-1">Total</span>
+                                                <span className="text-xl font-black text-white">₦{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
                                 <CategoryLegend
                                     data={getIncomeCategoryData()}
                                     highlightName={activeIncomeCategory || (getIncomeCategoryData().length > 0 ? getIncomeCategoryData()[0].name : null)}
+                                    palette={INCOME_COLORS}
+                                    onHover={setActiveIncomeCategory}
                                 />
                             </div>
                         </div>
@@ -1844,7 +2152,7 @@ const App = () => {
             {
                 currentPage === 'profile' && user && (
                     <div className="min-h-screen bg-genz-dark pb-28 p-6 text-white">
-                        <h1 className="text-4xl font-black mb-8 text-genz-purple">Profile </h1>
+                        <h1 className="text-4xl font-black mb-8 text-genz-purple">Profile</h1>
 
                         <div className="bg-gradient-to-br from-genz-card to-black/50 rounded-[2rem] p-8 mb-6 border border-genz-card text-center relative overflow-hidden shadow-genz-purple-brutalist">
                             <div className="absolute -top-24 -left-24 w-48 h-48 bg-genz-pink blur-[80px] opacity-40"></div>
@@ -1852,7 +2160,7 @@ const App = () => {
                                 {user.username ? user.username[0].toUpperCase() : 'U'}
                             </div>
                             <h2 className="text-3xl font-black mb-1 text-genz-aqua">{user.username || 'User'}</h2>
-                            <p className="text-genz-textDim font-mono text-sm sm:text-xl mb-4 break-all px-4">{user.email || 'No Email'}</p>
+                            <p className="text-genz-textDim font-mono text-[11px] min-[375px]:text-xs sm:text-base mb-4 truncate px-2">{user.email || 'No Email'}</p>
 
                             {/* LEVEL & XP */}
                             <div className="mt-6 mb-2 px-4">
@@ -1883,7 +2191,7 @@ const App = () => {
                                     <span className="text-genz-textDim text-sm font-bold uppercase tracking-wider">Targets</span>
                                     <button
                                         onClick={() => setShowBudgetModal(true)}
-                                        className="bg-genz-aqua/20 text-genz-aqua px-3 py-1 rounded-full text-xs font-bold hover:bg-genz-aqua hover:text-black  transition-all"
+                                        className="bg-genz-aqua/20 text-genz-aqua px-3 py-1 rounded-full text-xs font-bold hover:bg-genz-aqua hover:text-black transition-all"
                                     >
                                         + New Target
                                     </button>
@@ -1905,8 +2213,15 @@ const App = () => {
                                                             <span className="text-xl">{EXPENSE_CATEGORIES.find(c => c.name === budget.category)?.emoji || '💰'}</span>
                                                             <div className="flex flex-col">
                                                                 <span className="font-bold text-sm leading-tight">{budget.category}</span>
-                                                                <span className="text-[9px] text-genz-textDim uppercase tracking-tighter opacity-70">
-                                                                    {budget.period === 'weekly' ? '📅 Weekly' : budget.period === 'monthly' ? '📆 Monthly' : '🗓️ Custom'}
+                                                                <span className="text-[9px] text-genz-textDim uppercase tracking-tighter opacity-70 flex flex-col sm:flex-row sm:gap-1">
+                                                                    <span className="font-bold text-genz-aqua">{budget.period === 'weekly' ? 'WEEKLY' : budget.period === 'monthly' ? 'MONTHLY' : 'CUSTOM'}</span>
+                                                                    <span className="hidden sm:inline">•</span>
+                                                                    <span>
+                                                                        {budget.startDate && budget.endDate
+                                                                            ? `${new Date(budget.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${new Date(budget.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                                                                            : ''
+                                                                        }
+                                                                    </span>
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -1926,10 +2241,11 @@ const App = () => {
                                                         ></div>
                                                     </div>
 
-                                                    {/* Delete Button (visible on hover) */}
+                                                    {/* Delete Button (always visible on mobile, hover on desktop) */}
                                                     <button
                                                         onClick={() => handleDeleteBudget(budget._id || budget.id)}
-                                                        className="absolute top-2 right-2 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        className="absolute top-2 right-2 text-red-500 opacity-70 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:opacity-100 active:scale-95"
+                                                        aria-label="Delete budget"
                                                     >
                                                         <Icons.Trash />
                                                     </button>
@@ -1964,16 +2280,21 @@ const App = () => {
                                                 return (
                                                     <div key={goalId} className={`rounded-xl p-3 relative group ${isCompleted ? 'bg-green-900/20 border border-green-500/30' : 'bg-black/30'}`}>
                                                         <div className="flex justify-between items-start mb-2">
-                                                            <div className="flex flex-col">
-                                                                <span className="font-bold text-sm text-white">{goal.category}</span>
-                                                                {goal.startDate && (
-                                                                    <span className="text-[10px] text-genz-textDim font-bold uppercase tracking-tighter opacity-70">
-                                                                        🗓️ {goal.period === 'custom'
-                                                                            ? `${new Date(goal.startDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} — ${new Date(goal.endDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}`
-                                                                            : `${goal.period.charAt(0).toUpperCase() + goal.period.slice(1)} Goal`
-                                                                        }
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-xl">{goal.emoji || INCOME_CATEGORIES.find(c => c.name === goal.category)?.emoji || '💰'}</span>
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-bold text-sm text-white">{goal.category}</span>
+                                                                    <span className="text-[9px] text-genz-textDim font-bold uppercase tracking-tighter opacity-70 flex flex-col sm:flex-row sm:gap-1">
+                                                                        <span className="text-green-500">{goal.period === 'weekly' ? 'WEEKLY' : goal.period === 'monthly' ? 'MONTHLY' : 'CUSTOM'}</span>
+                                                                        <span className="hidden sm:inline">•</span>
+                                                                        <span>
+                                                                            {goal.startDate && goal.endDate
+                                                                                ? `${new Date(goal.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${new Date(goal.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                                                                                : ''
+                                                                            }
+                                                                        </span>
                                                                     </span>
-                                                                )}
+                                                                </div>
                                                             </div>
                                                             <div className="text-right">
                                                                 <span className="text-xs font-bold text-green-400">
@@ -1991,10 +2312,11 @@ const App = () => {
                                                             ></div>
                                                         </div>
 
-                                                        {/* Delete Button (visible on hover) */}
+                                                        {/* Delete Button (always visible on mobile, hover on desktop) */}
                                                         <button
                                                             onClick={() => handleDeleteSavingsGoal(goalId)}
-                                                            className="absolute top-2 right-2 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            className="absolute top-2 right-2 text-red-500 opacity-70 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:opacity-100 active:scale-95"
+                                                            aria-label="Delete savings goal"
                                                         >
                                                             <Icons.Trash />
                                                         </button>
@@ -2003,7 +2325,7 @@ const App = () => {
                                             })
                                         )}
                                     </div>
-                                </div >
+                                </div>
 
                                 <div className="flex justify-between items-center mt-6 mb-2 pt-4 border-t border-genz-borderDark/50">
                                     <span className="text-genz-textDim text-sm font-bold uppercase tracking-wider">Current Streak</span>
@@ -2079,362 +2401,400 @@ const App = () => {
                                     </div>
                                 </div>
 
-                            </div >
-                        </div >
+                            </div>
+                            <button
+                                onClick={handleLogout}
+                                disabled={isLoading}
+                                className={`w-full mt-10 bg-red-500 text-white py-4 rounded-xl font-black uppercase tracking-wider hover:bg-red-600 transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 ${isLoading ? 'opacity-70 cursor-wait' : ''}`}
+                            >
+                                {isLoading ? <><Icons.Spinner /> Logging out...</> : 'Log Out'}
+                            </button>
 
-                        <button
-                            onClick={handleLogout}
-                            disabled={isLoading}
-                            className={`w-full bg-red-600/50 text-white py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-red-600 transition-all flex items-center justify-center gap-2 border border-red-600/30 ${isLoading ? 'opacity-70 cursor-wait' : ''}`}
-                        >
-                            {isLoading ? <><Icons.Spinner /> Logging out...</> : 'Log Out'}
-                        </button>
-
-                        {/* LEVEL UP MODAL */}
-                        {
-                            showLevelUp && (
-                                <div className="fixed inset-0 z-[300] flex items-center justify-center pointer-events-none">
-                                    <div className="bg-gradient-to-br from-yellow-400 to-orange-500 p-1 rounded-[2rem] animate-in zoom-in duration-500 shadow-[0_0_100px_rgba(255,165,0,0.5)]">
-                                        <div className="bg-black/90 backdrop-blur-xl rounded-[1.9rem] p-8 text-center border border-yellow-500/50 relative overflow-hidden">
-                                            <div className="absolute inset-0 bg-yellow-500/10 animate-pulse"></div>
-                                            <h2 className="text-5xl mb-2 animate-bounce">🆙</h2>
-                                            <h3 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-400 uppercase italic">Level Up!</h3>
-                                            <p className="text-white font-bold text-lg mt-2">You are now Level {level}!</p>
-                                            <p className="text-yellow-200/80 text-sm font-mono mt-1">Keep crushing your goals! 🚀</p>
+                            {/* LEVEL UP MODAL */}
+                            {
+                                showLevelUp && (
+                                    <div className="fixed inset-0 z-[300] flex items-center justify-center pointer-events-none">
+                                        <div className="bg-gradient-to-br from-yellow-400 to-orange-500 p-1 rounded-[2rem] animate-in zoom-in duration-500 shadow-[0_0_100px_rgba(255,165,0,0.5)]">
+                                            <div className="bg-black/90 backdrop-blur-xl rounded-[1.9rem] p-8 text-center border border-yellow-500/50 relative overflow-hidden">
+                                                <div className="absolute inset-0 bg-yellow-500/10 animate-pulse"></div>
+                                                <h2 className="text-5xl mb-2 animate-bounce">🆙</h2>
+                                                <h3 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-400 uppercase italic">Level Up!</h3>
+                                                <p className="text-white font-bold text-lg mt-2">You are now Level {level}!</p>
+                                                <p className="text-yellow-200/80 text-sm font-mono mt-1">Keep crushing your goals! 🚀</p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            )
-                        }
+                                )
+                            }
 
-                        {/* Add Budget Modal */}
-                        {
-                            showBudgetModal && (
-                                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-                                    <div className="bg-genz-card border border-genz-borderDark w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col overflow-hidden">
-                                        <h3 className="text-2xl font-black text-white mb-4 shrink-0">Set Target 🎯</h3>
-                                        <form onSubmit={handleAddBudget} className="flex flex-col flex-1 overflow-hidden">
-                                            <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
-                                                <div>
-                                                    <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Category</label>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {EXPENSE_CATEGORIES.map(cat => (
-                                                            <button
-                                                                key={cat.name}
-                                                                type="button"
-                                                                onClick={() => setBudgetCategory(cat.name)}
-                                                                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${budgetCategory === cat.name ? 'bg-genz-aqua text-white border-transparent shadow-lg shadow-genz-aqua/20' : 'bg-genz-dark text-genz-textDim border-genz-borderDark hover:border-genz-aqua/30'}`}
-                                                            >
-                                                                {cat.name}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                <div>
-                                                    <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Target Amount</label>
-                                                    <div className="relative">
-                                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-genz-textDim font-bold">₦</span>
-                                                        <input
-                                                            type="number"
-                                                            value={budgetAmount}
-                                                            onChange={(e) => setBudgetAmount(e.target.value)}
-                                                            className="w-full bg-genz-dark border border-genz-borderDark rounded-xl py-4 pl-10 pr-4 text-white font-bold focus:outline-none focus:border-genz-aqua transition-colors"
-                                                            placeholder="0.00"
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                <div className="space-y-2">
-                                                    <label className="text-genz-textDim text-xs font-bold uppercase block ml-1">Tracking Period</label>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {['weekly', 'monthly', 'custom'].map(p => (
-                                                            <button
-                                                                key={p}
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    setBudgetPeriod(p);
-                                                                    if (p === 'weekly') {
-                                                                        const start = budgetStartDate || new Date().toISOString().split('T')[0];
-                                                                        const end = new Date(new Date(start).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-                                                                        setBudgetRange(start, end);
-                                                                    } else if (p === 'monthly') {
-                                                                        const d = new Date(budgetStartDate || new Date());
-                                                                        const end = new Date(d.getFullYear(), d.getMonth() + 1, d.getDate()).toISOString().split('T')[0];
-                                                                        setBudgetRange(budgetStartDate || d.toISOString().split('T')[0], end);
-                                                                    } else if (p === 'custom') {
-                                                                        setShowCalendar(true);
-                                                                    }
-                                                                }}
-                                                                className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border ${budgetPeriod === p ? 'bg-genz-aqua text-white border-transparent shadow-lg shadow-genz-aqua/20' : 'bg-genz-dark text-genz-textDim border-genz-borderDark hover:border-genz-aqua/30'}`}
-                                                            >
-                                                                {p}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                <div className="space-y-3 pt-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setShowCalendar(!showCalendar)}
-                                                        className="w-full flex items-center justify-between p-3 bg-genz-dark/50 border border-genz-borderDark rounded-2xl group hover:border-genz-aqua transition-colors"
-                                                    >
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-lg bg-genz-aqua/10 flex items-center justify-center text-genz-aqua text-sm group-hover:scale-110 transition-transform">
-                                                                🗓️
-                                                            </div>
-                                                            <div className="text-left">
-                                                                <p className="text-[8px] text-genz-textDim font-black uppercase tracking-widest leading-none mb-1">Target Timeline</p>
-                                                                <p className="text-white font-bold text-xs">
-                                                                    {budgetStartDate ? new Date(budgetStartDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) : 'Pick Start'}
-                                                                    {budgetEndDate && ` — ${new Date(budgetEndDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}`}
-                                                                </p>
-                                                            </div>
+                            {/* Add Budget Modal */}
+                            {
+                                showBudgetModal && (
+                                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+                                        <div className="bg-genz-card border border-genz-borderDark w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col overflow-hidden">
+                                            <h3 className="text-2xl font-black text-white mb-4 shrink-0">Set Target 🎯</h3>
+                                            <form onSubmit={handleAddBudget} className="flex flex-col flex-1 overflow-hidden">
+                                                <div className="flex-1 overflow-y-auto space-y-5 pr-2 custom-scrollbar">
+                                                    <div>
+                                                        <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Category</label>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {EXPENSE_CATEGORIES.map(cat => (
+                                                                <button
+                                                                    key={cat.name}
+                                                                    type="button"
+                                                                    onClick={() => setBudgetCategory(cat.name)}
+                                                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${budgetCategory === cat.name ? 'bg-genz-aqua text-white border-transparent shadow-lg shadow-genz-aqua/20' : 'bg-genz-dark text-genz-textDim border-genz-borderDark hover:border-genz-aqua/30'}`}
+                                                                >
+                                                                    {cat.name}
+                                                                </button>
+                                                            ))}
                                                         </div>
-                                                        <div className={`transition-transform duration-300 ${showCalendar ? 'rotate-180' : ''}`}>
-                                                            <Icons.ChevronRight />
-                                                        </div>
-                                                    </button>
+                                                    </div>
 
-                                                    {showCalendar && (
-                                                        <div className="animate-in slide-in-from-top-2 duration-300">
-                                                            <MiniCalendar
-                                                                startDate={budgetStartDate}
-                                                                endDate={budgetEndDate}
-                                                                accentColor="genz-aqua"
-                                                                onSelectRange={(start, end) => {
-                                                                    if (!start) {
-                                                                        setBudgetRange(null, null);
-                                                                        return;
-                                                                    }
-                                                                    if (budgetPeriod === 'weekly') {
-                                                                        const newEnd = new Date(new Date(start).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-                                                                        setBudgetRange(start, newEnd);
-                                                                    } else if (budgetPeriod === 'monthly') {
-                                                                        const d = new Date(start);
-                                                                        const newEnd = new Date(d.getFullYear(), d.getMonth() + 1, d.getDate()).toISOString().split('T')[0];
-                                                                        setBudgetRange(start, newEnd);
-                                                                    } else {
-                                                                        setBudgetStartDate(start);
-                                                                        setBudgetEndDate(end);
-                                                                        if (start && end) setBudgetPeriod('custom');
-                                                                    }
-                                                                }}
+                                                    <div className="mt-8">
+                                                        <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Target Amount</label>
+                                                        <div className="relative">
+                                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-genz-textDim font-bold">₦</span>
+                                                            <input
+                                                                type="number"
+                                                                value={budgetAmount}
+                                                                onChange={(e) => setBudgetAmount(e.target.value)}
+                                                                className="w-full bg-genz-dark border border-genz-borderDark rounded-xl py-4 pl-10 pr-4 text-white font-bold focus:outline-none focus:border-genz-aqua transition-colors"
+                                                                placeholder="0.00"
                                                             />
                                                         </div>
-                                                    )}
+                                                    </div>
+
+                                                    <div className="mt-8 space-y-2">
+                                                        <label className="text-genz-textDim text-xs font-bold uppercase block ml-1">Tracking Period</label>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {['weekly', 'monthly', 'custom'].map(p => (
+                                                                <button
+                                                                    key={p}
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setBudgetPeriod(p);
+                                                                        const today = new Date();
+
+                                                                        if (p === 'weekly') {
+                                                                            // Default to Start of Current Week (Sunday)
+                                                                            const day = today.getDay();
+                                                                            const diff = today.getDate() - day; // Adjust to last Sunday
+                                                                            const startOfWeek = new Date(today.setDate(diff));
+
+                                                                            const endOfWeek = new Date(startOfWeek);
+                                                                            endOfWeek.setDate(startOfWeek.getDate() + 6); // End on Saturday
+
+                                                                            setBudgetRange(formatDate(startOfWeek), formatDate(endOfWeek));
+                                                                        } else if (p === 'monthly') {
+                                                                            // Default to Start of Current Month (1st)
+                                                                            const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                                                                            const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0); // Last day of current month
+
+                                                                            setBudgetRange(formatDate(startOfMonth), formatDate(endOfMonth));
+                                                                        } else if (p === 'custom') {
+                                                                            setShowCalendar(true);
+                                                                            // Keep current range or default to today
+                                                                            if (!budgetStartDate) setBudgetRange(formatDate(today), formatDate(today));
+                                                                        }
+                                                                    }}
+                                                                    className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border ${budgetPeriod === p ? 'bg-genz-aqua text-white border-transparent shadow-lg shadow-genz-aqua/20' : 'bg-genz-dark text-genz-textDim border-genz-borderDark hover:border-genz-aqua/30'}`}
+                                                                >
+                                                                    {p}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-3 pt-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowCalendar(!showCalendar)}
+                                                            className="w-full flex items-center justify-between p-3 bg-genz-dark/50 border border-genz-borderDark rounded-2xl group hover:border-genz-aqua transition-colors"
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-8 h-8 rounded-lg bg-genz-aqua/10 flex items-center justify-center text-genz-aqua text-sm group-hover:scale-110 transition-transform">
+                                                                    🗓️
+                                                                </div>
+                                                                <div className="text-left">
+                                                                    <p className="text-[8px] text-genz-textDim font-black uppercase tracking-widest leading-none mb-1">Target Timeline</p>
+                                                                    <p className="text-white font-bold text-xs">
+                                                                        {budgetStartDate ? new Date(budgetStartDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) : 'Pick Start'}
+                                                                        {budgetEndDate && ` — ${new Date(budgetEndDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}`}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            <div className={`transition-transform duration-300 ${showCalendar ? 'rotate-180' : ''}`}>
+                                                                <Icons.ChevronRight />
+                                                            </div>
+                                                        </button>
+
+                                                        {showCalendar && (
+                                                            <div className="animate-in slide-in-from-top-2 duration-300">
+                                                                <MiniCalendar
+                                                                    startDate={budgetStartDate}
+                                                                    endDate={budgetEndDate}
+                                                                    accentColor="genz-aqua"
+                                                                    disablePast={true} // Prevent selecting past dates
+                                                                    onSelectRange={(start, end) => {
+                                                                        if (!start) {
+                                                                            setBudgetRange(null, null);
+                                                                            return;
+                                                                        }
+
+                                                                        // If Custom, allow picking start and end freely
+                                                                        if (budgetPeriod === 'custom') {
+                                                                            if (start && !end) {
+                                                                                // First click: just set start usually, but MiniCalendar logic might pass both if user clicks again
+                                                                                // Here we trust the MiniCalendar passes what it has
+                                                                                setBudgetStartDate(start);
+                                                                                setBudgetEndDate(null);
+                                                                            } else {
+                                                                                setBudgetStartDate(start);
+                                                                                setBudgetEndDate(end);
+                                                                            }
+                                                                            return;
+                                                                        }
+
+                                                                        // For Weekly/Monthly modes, selecting a date sets the START date, and we auto-calc the end
+                                                                        const startDateObj = new Date(start);
+
+                                                                        if (budgetPeriod === 'weekly') {
+                                                                            // If they pick a Wednesday, that becomes start, end is Wed + 6 days
+                                                                            const endDateObj = new Date(startDateObj);
+                                                                            endDateObj.setDate(endDateObj.getDate() + 6);
+                                                                            setBudgetRange(start, formatDate(endDateObj));
+                                                                        } else if (budgetPeriod === 'monthly') {
+                                                                            // If they pick Jan 5th, start is Jan 5th, end is Feb 4th (1 month later) OR End of that month?
+                                                                            // Standard expectation: Pick any day in Jan -> Standard Jan 1 to Jan 31?
+                                                                            // Let's do: Pick a date -> That is Start Date -> End Date is +1 Month
+                                                                            const endDateObj = new Date(startDateObj);
+                                                                            endDateObj.setMonth(endDateObj.getMonth() + 1);
+                                                                            endDateObj.setDate(endDateObj.getDate() - 1);
+                                                                            setBudgetRange(start, formatDate(endDateObj));
+                                                                        }
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
+
                                                 </div>
 
-                                            </div>
-
-                                            <div className="flex gap-3 pt-4 shrink-0 bg-genz-card border-t border-genz-borderDark/20 mt-auto">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setShowBudgetModal(false)}
-                                                    className="flex-1 py-4 rounded-xl font-bold text-genz-textDim hover:text-white hover:bg-genz-dark transition-all"
-                                                >
-                                                    Cancel
-                                                </button>
-                                                <button
-                                                    type="submit"
-                                                    disabled={isLoading}
-                                                    className={`flex-1 bg-genz-aqua text-white py-4 rounded-xl font-bold shadow-lg shadow-genz-aqua/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 ${isLoading ? 'opacity-70 cursor-wait' : ''}`}
-                                                >
-                                                    {isLoading ? <><Icons.Spinner /> Saving...</> : 'Save Target'}
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            )
-                        }
-
-                        {/* Add Savings Modal */}
-                        {
-                            showSavingsModal && (
-                                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-                                    <div className="bg-genz-card border border-genz-borderDark w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col overflow-hidden">
-                                        <h3 className="text-2xl font-black text-white mb-4">Set Goal 🎯</h3>
-                                        <form onSubmit={handleAddSavingsGoal} className="flex flex-col flex-1 overflow-hidden">
-                                            <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
-                                                <div>
-                                                    <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Income Source</label>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {INCOME_CATEGORIES.map(cat => (
-                                                            <button
-                                                                key={cat.name}
-                                                                type="button"
-                                                                onClick={() => setSavingsCategory(cat.name)}
-                                                                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${savingsCategory === cat.name ? 'bg-emerald-500 text-black border-transparent shadow-lg shadow-emerald-500/30' : 'bg-genz-dark text-genz-textDim border-genz-borderDark hover:border-emerald-500/30'}`}
-                                                            >
-                                                                {cat.name}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                <div>
-                                                    <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Goal Amount</label>
-                                                    <div className="relative">
-                                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-genz-textDim font-bold">₦</span>
-                                                        <input
-                                                            type="number"
-                                                            value={savingsAmount}
-                                                            onChange={(e) => setSavingsAmount(e.target.value)}
-                                                            className="w-full bg-genz-dark border border-genz-borderDark rounded-xl py-4 pl-10 pr-4 text-white font-bold focus:outline-none focus:border-emerald-500 transition-colors"
-                                                            placeholder="0.00"
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                <div>
-                                                    <div className="flex justify-between items-center mb-2">
-                                                        <label className="text-genz-textDim text-[10px] font-bold uppercase tracking-widest">Tracking Period</label>
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        {['weekly', 'monthly', 'custom'].map(p => (
-                                                            <button
-                                                                key={p}
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    setSavingsPeriod(p);
-                                                                    if (p === 'weekly') {
-                                                                        const start = savingsStartDate || new Date().toISOString().split('T')[0];
-                                                                        const end = new Date(new Date(start).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-                                                                        setSavingsRange(start, end);
-                                                                    } else if (p === 'monthly') {
-                                                                        const d = new Date(savingsStartDate || new Date());
-                                                                        const end = new Date(d.getFullYear(), d.getMonth() + 1, d.getDate()).toISOString().split('T')[0];
-                                                                        setSavingsRange(savingsStartDate || d.toISOString().split('T')[0], end);
-                                                                    } else if (p === 'custom') {
-                                                                        setShowSavingsCalendar(true);
-                                                                    }
-                                                                }}
-                                                                className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${savingsPeriod === p ? 'bg-emerald-500 text-black border-transparent shadow-lg shadow-emerald-500/30' : 'bg-genz-card/50 text-genz-textDim border-genz-borderDark hover:border-emerald-500/30'}`}
-                                                            >
-                                                                {p}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                <div className="space-y-3 pt-2">
+                                                <div className="flex gap-3 pt-4 shrink-0 bg-genz-card border-t border-genz-borderDark/20 mt-auto">
                                                     <button
                                                         type="button"
-                                                        onClick={() => setShowSavingsCalendar(!showSavingsCalendar)}
-                                                        className="w-full flex items-center justify-between p-3 bg-genz-dark/50 border border-genz-borderDark rounded-2xl group hover:border-emerald-500 transition-colors"
+                                                        onClick={() => setShowBudgetModal(false)}
+                                                        className="flex-1 py-4 rounded-xl font-bold text-genz-textDim hover:text-white hover:bg-genz-dark transition-all"
                                                     >
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 text-sm group-hover:scale-110 transition-transform">
-                                                                🗓️
-                                                            </div>
-                                                            <div className="text-left">
-                                                                <p className="text-[8px] text-genz-textDim font-black uppercase tracking-widest leading-none mb-1">Target Timeline</p>
-                                                                <p className="text-white font-bold text-xs">
-                                                                    {savingsPeriod === 'custom'
-                                                                        ? (savingsStartDate && savingsEndDate ? `${new Date(savingsStartDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} — ${new Date(savingsEndDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}` : 'Select Dates')
-                                                                        : `${new Date(savingsStartDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} — ${savingsEndDate ? new Date(savingsEndDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) : '...'}`
-                                                                    }
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                        <div className={`transition-transform duration-300 ${showSavingsCalendar ? 'rotate-180' : ''}`}>
-                                                            <Icons.ChevronRight />
-                                                        </div>
+                                                        Cancel
                                                     </button>
+                                                    <button
+                                                        type="submit"
+                                                        disabled={isLoading}
+                                                        className={`flex-1 bg-genz-aqua text-white py-4 rounded-xl font-bold shadow-lg shadow-genz-aqua/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 ${isLoading ? 'opacity-70 cursor-wait' : ''}`}
+                                                    >
+                                                        {isLoading ? <><Icons.Spinner /> Saving...</> : 'Save Target'}
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                )
+                            }
 
-                                                    {showSavingsCalendar && (
-                                                        <div className="animate-in slide-in-from-top-2 duration-300">
-                                                            <MiniCalendar
-                                                                startDate={savingsStartDate}
-                                                                endDate={savingsEndDate}
-                                                                accentColor="green-500"
-                                                                onSelectRange={(start, end) => {
-                                                                    if (!start) {
-                                                                        setSavingsStartDate(null);
-                                                                        setSavingsEndDate(null);
-                                                                        return;
-                                                                    }
-                                                                    if (savingsPeriod === 'weekly') {
-                                                                        const newEnd = new Date(new Date(start).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-                                                                        setSavingsStartDate(start);
-                                                                        setSavingsEndDate(newEnd);
-                                                                    } else if (savingsPeriod === 'monthly') {
-                                                                        const d = new Date(start);
-                                                                        const newEnd = new Date(d.getFullYear(), d.getMonth() + 1, d.getDate()).toISOString().split('T')[0];
-                                                                        setSavingsStartDate(start);
-                                                                        setSavingsEndDate(newEnd);
-                                                                    } else {
-                                                                        setSavingsStartDate(start);
-                                                                        setSavingsEndDate(end);
-                                                                        if (start && end) setSavingsPeriod('custom');
-                                                                    }
-                                                                }}
+                            {/* Add Savings Modal */}
+                            {
+                                showSavingsModal && (
+                                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+                                        <div className="bg-genz-card border border-genz-borderDark w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col overflow-hidden">
+                                            <h3 className="text-2xl font-black text-white mb-4">Set Goal 🎯</h3>
+                                            <form onSubmit={handleAddSavingsGoal} className="flex flex-col flex-1 overflow-hidden">
+                                                <div className="flex-1 overflow-y-auto space-y-5 pr-2 custom-scrollbar">
+                                                    <div>
+                                                        <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">CATEGORY</label>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {INCOME_CATEGORIES.map(cat => (
+                                                                <button
+                                                                    key={cat.name}
+                                                                    type="button"
+                                                                    onClick={() => setSavingsCategory(cat.name)}
+                                                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${savingsCategory === cat.name ? 'bg-emerald-500 text-black border-transparent shadow-lg shadow-emerald-500/30' : 'bg-genz-dark text-genz-textDim border-genz-borderDark hover:border-emerald-500/30'}`}
+                                                                >
+                                                                    {cat.name}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="mt-12">
+                                                        <label className="block text-genz-textDim text-xs font-bold uppercase mb-2">Goal Amount</label>
+                                                        <div className="relative">
+                                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-genz-textDim font-bold">₦</span>
+                                                            <input
+                                                                type="number"
+                                                                value={savingsAmount}
+                                                                onChange={(e) => setSavingsAmount(e.target.value)}
+                                                                className="w-full bg-genz-dark border border-genz-borderDark rounded-xl py-4 pl-10 pr-4 text-white font-bold focus:outline-none focus:border-emerald-500 transition-colors"
+                                                                placeholder="0.00"
                                                             />
                                                         </div>
-                                                    )}
+                                                    </div>
+
+                                                    <div className="mt-12">
+                                                        <div className="flex justify-between items-center mb-2">
+                                                            <label className="text-genz-textDim text-[10px] font-bold uppercase tracking-widest">Tracking Period</label>
+                                                        </div>
+                                                        <div className="flex gap-2">
+                                                            {['weekly', 'monthly', 'custom'].map(p => (
+                                                                <button
+                                                                    key={p}
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setSavingsPeriod(p);
+                                                                        if (p === 'weekly') {
+                                                                            const start = savingsStartDate || formatDate(new Date());
+                                                                            const [y, m, d] = start.split('-').map(Number);
+                                                                            const date = new Date(y, m - 1, d);
+                                                                            date.setDate(date.getDate() + 6);
+                                                                            setSavingsRange(start, formatDate(date));
+                                                                        } else if (p === 'monthly') {
+                                                                            const start = savingsStartDate || formatDate(new Date());
+                                                                            const [y, m, d] = start.split('-').map(Number);
+                                                                            const date = new Date(y, m - 1, d);
+                                                                            date.setMonth(date.getMonth() + 1);
+                                                                            date.setDate(date.getDate() - 1);
+                                                                            setSavingsRange(start, formatDate(date));
+                                                                        } else if (p === 'custom') {
+                                                                            setShowSavingsCalendar(true);
+                                                                        }
+                                                                    }}
+                                                                    className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${savingsPeriod === p ? 'bg-emerald-500 text-black border-transparent shadow-lg shadow-emerald-500/30' : 'bg-genz-card/50 text-genz-textDim border-genz-borderDark hover:border-emerald-500/30'}`}
+                                                                >
+                                                                    {p}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-3 pt-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowSavingsCalendar(!showSavingsCalendar)}
+                                                            className="w-full flex items-center justify-between p-3 bg-genz-dark/50 border border-genz-borderDark rounded-2xl group hover:border-emerald-500 transition-colors"
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 text-sm group-hover:scale-110 transition-transform">
+                                                                    🗓️
+                                                                </div>
+                                                                <div className="text-left">
+                                                                    <p className="text-[8px] text-genz-textDim font-black uppercase tracking-widest leading-none mb-1">Target Timeline</p>
+                                                                    <p className="text-white font-bold text-xs">
+                                                                        {savingsStartDate && savingsEndDate
+                                                                            ? `${new Date(savingsStartDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} — ${new Date(savingsEndDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}`
+                                                                            : 'Select Timeline'}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            <div className={`transition-transform duration-300 ${showSavingsCalendar ? 'rotate-180' : ''}`}>
+                                                                <Icons.ChevronRight />
+                                                            </div>
+                                                        </button>
+
+                                                        {showSavingsCalendar && (
+                                                            <div className="animate-in slide-in-from-top-2 duration-300">
+                                                                <MiniCalendar
+                                                                    startDate={savingsStartDate}
+                                                                    endDate={savingsEndDate}
+                                                                    accentColor="green-500"
+                                                                    disablePast={true}
+                                                                    onSelectRange={(start, end) => {
+                                                                        if (!start) {
+                                                                            setSavingsStartDate(null);
+                                                                            setSavingsEndDate(null);
+                                                                            return;
+                                                                        }
+
+                                                                        const startObj = new Date(start);
+
+                                                                        if (savingsPeriod === 'weekly') {
+                                                                            const endObj = new Date(startObj);
+                                                                            endObj.setDate(endObj.getDate() + 6);
+                                                                            setSavingsRange(start, formatDate(endObj));
+                                                                        } else if (savingsPeriod === 'monthly') {
+                                                                            const endObj = new Date(startObj);
+                                                                            endObj.setMonth(endObj.getMonth() + 1);
+                                                                            endObj.setDate(endObj.getDate() - 1);
+                                                                            setSavingsRange(start, formatDate(endObj));
+                                                                        } else {
+                                                                            setSavingsRange(start, end);
+                                                                            if (start && end) setSavingsPeriod('custom');
+                                                                        }
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
+
+                                                <div className="flex gap-3 pt-4 shrink-0 bg-genz-card border-t border-genz-borderDark/20 mt-auto">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowSavingsModal(false)}
+                                                        className="flex-1 py-4 rounded-xl font-bold text-genz-textDim hover:text-white hover:bg-genz-dark transition-all"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                    <button
+                                                        type="submit"
+                                                        disabled={isLoading}
+                                                        className={`flex-1 bg-emerald-500 text-black py-4 rounded-xl font-bold shadow-lg shadow-emerald-500/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 ${isLoading ? 'opacity-70 cursor-wait' : ''}`}
+                                                    >
+                                                        {isLoading ? <><Icons.Spinner /> Saving...</> : 'Save Goal'}
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                )
+                            }
+
+                            {/* Achievement Details Modal */}
+                            {
+                                selectedAchievement && (
+                                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                                        <div className="bg-genz-card border border-genz-borderDark w-full max-w-md rounded-[2rem] p-6 shadow-2xl animate-pop-in">
+                                            <div className="text-center mb-6">
+                                                <div className="text-6xl mb-4">{selectedAchievement.icon}</div>
+                                                <h3 className="text-2xl font-black text-white mb-2">{selectedAchievement.title}</h3>
+                                                <p className="text-genz-textDim text-sm">{selectedAchievement.subtitle}</p>
                                             </div>
 
-                                            <div className="flex gap-3 pt-4 shrink-0 bg-genz-card border-t border-genz-borderDark/20 mt-auto">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setShowSavingsModal(false)}
-                                                    className="flex-1 py-4 rounded-xl font-bold text-genz-textDim hover:text-white hover:bg-genz-dark transition-all"
-                                                >
-                                                    Cancel
-                                                </button>
-                                                <button
-                                                    type="submit"
-                                                    disabled={isLoading}
-                                                    className={`flex-1 bg-emerald-500 text-black py-4 rounded-xl font-bold shadow-lg shadow-emerald-500/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 ${isLoading ? 'opacity-70 cursor-wait' : ''}`}
-                                                >
-                                                    {isLoading ? <><Icons.Spinner /> Saving...</> : 'Save Goal'}
-                                                </button>
+                                            <div className="bg-black/30 rounded-xl p-4 mb-4">
+                                                <p className="text-white text-sm leading-relaxed">
+                                                    {isAchievementUnlocked(selectedAchievement.id)
+                                                        ? selectedAchievement.description
+                                                        : selectedAchievement.howToUnlock}
+                                                </p>
                                             </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            )
-                        }
 
-                        {/* Achievement Details Modal */}
-                        {
-                            selectedAchievement && (
-                                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                                    <div className="bg-genz-card border border-genz-borderDark w-full max-w-md rounded-[2rem] p-6 shadow-2xl animate-pop-in">
-                                        <div className="text-center mb-6">
-                                            <div className="text-6xl mb-4">{selectedAchievement.icon}</div>
-                                            <h3 className="text-2xl font-black text-white mb-2">{selectedAchievement.title}</h3>
-                                            <p className="text-genz-textDim text-sm">{selectedAchievement.subtitle}</p>
+                                            <button
+                                                onClick={() => setSelectedAchievement(null)}
+                                                className="w-full bg-genz-purple text-white py-4 rounded-xl font-bold shadow-lg shadow-genz-purple/20 hover:scale-[1.02] active:scale-95 transition-all"
+                                            >
+                                                Close
+                                            </button>
                                         </div>
-
-                                        <div className="bg-black/30 rounded-xl p-4 mb-4">
-                                            <p className="text-white text-sm leading-relaxed">
-                                                {isAchievementUnlocked(selectedAchievement.id)
-                                                    ? selectedAchievement.description
-                                                    : selectedAchievement.howToUnlock}
-                                            </p>
-                                        </div>
-
-                                        <button
-                                            onClick={() => setSelectedAchievement(null)}
-                                            className="w-full bg-genz-purple text-white py-4 rounded-xl font-bold shadow-lg shadow-genz-purple/20 hover:scale-[1.02] active:scale-95 transition-all"
-                                        >
-                                            Close
-                                        </button>
                                     </div>
-                                </div>
-                            )
-                        }
+                                )
+                            }
 
-                        {/* Confetti Overlay */}
-                        {showConfetti && <Confetti />}
-                    </div >
+                            {/* Confetti Overlay */}
+                            {showConfetti && <Confetti />}
+                        </div>
+                    </div>
                 )
             }
-
 
             {/* Global Bottom Navigation Bar (Unchanged) */}
             {

@@ -1,8 +1,13 @@
-// detect if we are running locally to point to local backend
-const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+// Detect if we are running locally (including local network IPs for mobile testing)
+const hostname = window.location.hostname;
+const isLocal = hostname === "localhost" ||
+  hostname === "127.0.0.1" ||
+  hostname.startsWith("192.168.") ||
+  hostname.startsWith("172.") ||
+  hostname.startsWith("10.");
 
 const API_BASE = isLocal
-  ? "http://localhost:4000"
+  ? `http://${hostname}:4000x`
   : (import.meta.env.VITE_API_BASE || "https://genz-finance-tracker.onrender.com");
 
 async function request(path, options = {}) {
@@ -90,4 +95,11 @@ export const createSavingsGoal = (goal) =>
 
 export const deleteSavingsGoal = (id) =>
   request(`/api/savings/${id}`, { method: "DELETE" });
+
+// Profile API (XP & Achievements)
+export const updateProfile = (profileData) =>
+  request("/api/auth/profile", {
+    method: "PUT",
+    body: JSON.stringify(profileData),
+  });
 

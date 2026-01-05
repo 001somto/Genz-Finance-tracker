@@ -8,6 +8,8 @@ const bcrypt = require('bcryptjs');
 // Create token
 const genToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
+const auth = require('../middleware/auth');
+
 // SIGNUP
 router.post('/signup', async (req, res) => {
     try {
@@ -41,7 +43,13 @@ router.post('/signup', async (req, res) => {
 
         res.json({
             token: genToken(user._id),
-            user: { _id: user._id, email: user.email, username: user.username }
+            user: {
+                _id: user._id,
+                email: user.email,
+                username: user.username,
+                xp: user.xp,
+                achievements: user.achievements
+            }
         });
     } catch (err) {
         console.error('Signup Error:', err);
@@ -62,10 +70,35 @@ router.post('/login', async (req, res) => {
 
         res.json({
             token: genToken(user._id),
-            user: { _id: user._id, email: user.email, username: user.username }
+            user: {
+                _id: user._id,
+                email: user.email,
+                username: user.username,
+                xp: user.xp,
+                achievements: user.achievements
+            }
         });
     } catch (err) {
         console.error('Login Error:', err);
+        res.status(500).json({ message: 'Server Error' });
+    }
+});
+
+// UPDATE PROFILE (XP & ACHIEVEMENTS)
+router.put('/profile', auth, async (req, res) => {
+    try {
+        const { xp, achievements } = req.body;
+        const user = await User.findById(req.user);
+
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        if (xp !== undefined) user.xp = xp;
+        if (achievements !== undefined) user.achievements = achievements;
+
+        await user.save();
+        res.json({ message: "Profile updated", xp: user.xp, achievements: user.achievements });
+    } catch (err) {
+        console.error('Update Profile Error:', err);
         res.status(500).json({ message: 'Server Error' });
     }
 });

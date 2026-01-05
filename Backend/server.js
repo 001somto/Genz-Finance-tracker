@@ -20,10 +20,16 @@ app.use(cors({
 	origin: function (origin, callback) {
 		// Allow requests with no origin (like mobile apps or curl requests)
 		if (!origin) return callback(null, true);
-		if (allowedOrigins.indexOf(origin) !== -1 || origin === 'null') {
+
+		// Allow standard allowed origins AND local network IPs for mobile testing
+		if (allowedOrigins.indexOf(origin) !== -1 ||
+			origin === 'null' ||
+			origin.startsWith('http://192.168.') ||
+			origin.startsWith('http://172.') ||
+			origin.startsWith('http://10.')) {
 			return callback(null, true);
 		} else {
-			return callback(new Error('Not allowed by CORS'));
+			return callback(new Error('Not allowed by CORS: ' + origin));
 		}
 	},
 	allowedHeaders: ['Content-Type', 'Authorization'],
