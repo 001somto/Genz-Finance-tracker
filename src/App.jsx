@@ -1731,7 +1731,7 @@ const App = () => {
                     <div className="p-6">
                         <header className="flex justify-between items-end mb-8 mt-2">
                             <div>
-                                <h1 className="text-3xl font-bold tracking-tight mb-1"> Hi, <span className="text-white capitalize">{user.username || user.email}</span></h1>
+                                <h1 className="text-3xl font-bold tracking-tight mb-1"> Hi,<span className="text-white capitalize">{user.username || user.email}</span></h1>
                                 <p className="text-genz-textDim text-xs font-bold uppercase tracking-widest">
                                     {transactions.length > 0 ? 'Welcome back!' : 'Welcome!'}
                                 </p>
@@ -1742,39 +1742,51 @@ const App = () => {
                             </div>
                         </header>
 
-                        <div className="bg-gradient-to-br from-genz-purple via-indigo-600 to-indigo-800 rounded-[2.5rem] p-8 shadow-2xl mb-8 relative overflow-hidden group border border-white/10">
-                            <div className="absolute -right-10 -top-10 w-40 h-40 bg-white opacity-10 rounded-full blur-2xl group-hover:scale-150 transition-all duration-700"></div>
-                            <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-genz-aqua opacity-10 rounded-full blur-2xl group-hover:scale-125 transition-all duration-700"></div>
-                            <p className="text-white/70 font-bold uppercase tracking-widest text-[10px] mb-3">Total Balance</p>
-                            <div className="flex justify-between items-start">
-                                <p className="text-5xl font-black text-white tracking-tighter flex items-baseline">
-                                    <span className="text-3xl mr-1.5 font-bold opacity-80">{balance < 0 ? '- ₦' : '₦'}</span>
+                        <div
+                            className="rounded-[1.75rem] p-5 shadow-[0_20px_60px_rgba(139,92,246,0.3)] mb-5 relative overflow-hidden group border border-white/40"
+                            style={{
+                                background: 'linear-gradient(135deg, #7C3AED 0%, #4338CA 100%)',
+                                position: 'relative'
+                            }}
+                        >
+                            {/* Decorative Orbs */}
+                            <div className="absolute -right-10 -top-10 w-64 h-64 bg-white opacity-15 rounded-full blur-3xl pointer-events-none"></div>
+                            <div className="absolute -left-10 -bottom-10 w-64 h-64 bg-cyan-400 opacity-10 rounded-full blur-3xl pointer-events-none"></div>
+
+                            <p className="text-white font-black uppercase tracking-[0.2em] text-[9px] mb-2 opacity-90 drop-shadow-sm">Total Balance</p>
+
+                            <div className="flex justify-between items-start relative z-10">
+                                <p className="text-3xl font-black text-white tracking-tighter flex items-baseline drop-shadow-[0_6px_6px_rgba(0,0,0,0.3)]">
+                                    <span className="text-xl mr-1 font-bold opacity-90">{balance < 0 ? '- ₦' : '₦'}</span>
                                     {Math.abs(balance).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                 </p>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-1.5 mt-8 relative z-10">
-                                <div className="bg-black/60 backdrop-blur-md rounded-2xl p-2 flex flex-col justify-between border-2 border-white/10 shadow-xl overflow-hidden min-w-0 min-h-[70px]">
-                                    <div className="text-white/50 text-[7px] min-[375px]:text-[9px] font-black uppercase tracking-tighter leading-tight mb-1">
-                                        <p>Money</p>
-                                        <p>In</p>
+                            <div className="grid grid-cols-3 gap-1 mt-4 relative z-20">
+                                {[
+                                    { label1: 'Money', label2: 'In', value: totalIncome, color: 'text-[#10b981]', sign: '+' },
+                                    { label1: 'Money', label2: 'Out', value: totalExpense, color: 'text-[#f43f5e]', sign: '-' },
+                                    { label1: 'Total', label2: 'Moves', value: totalIncome + totalExpense, color: 'text-white', sign: '' }
+                                ].map((item, idx) => (
+                                    <div
+                                        key={idx}
+                                        className="rounded-xl p-2 flex flex-col justify-between border border-white/50 shadow-2xl min-h-[62px] transition-all active:scale-95"
+                                        style={{
+                                            background: 'rgba(255, 255, 255, 0.15)',
+                                            WebkitBackdropFilter: 'blur(25px) saturate(250%) brightness(110%)',
+                                            backdropFilter: 'blur(25px) saturate(250%) brightness(110%)',
+                                            boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.4)',
+                                        }}
+                                    >
+                                        <div className="text-white font-bold uppercase tracking-tighter leading-tight mb-1 opacity-100 text-[9px] drop-shadow-sm">
+                                            <p>{item.label1}</p>
+                                            <p>{item.label2}</p>
+                                        </div>
+                                        <p className={`${item.color} font-black text-[11px] min-[375px]:text-[13px] whitespace-nowrap truncate drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]`}>
+                                            <span className="text-[0.75em] mr-0.5 font-bold opacity-80">{item.sign}₦</span>{item.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                        </p>
                                     </div>
-                                    <p className="text-genz-aqua font-black text-[10px] min-[375px]:text-xs lg:text-lg whitespace-nowrap truncate"><span className="text-[0.8em] mr-0.5">+</span>₦{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                                </div>
-                                <div className="bg-black/60 backdrop-blur-md rounded-2xl p-2 flex flex-col justify-between border-2 border-white/10 shadow-xl overflow-hidden min-w-0 min-h-[70px]">
-                                    <div className="text-white/50 text-[7px] min-[375px]:text-[9px] font-black uppercase tracking-tighter leading-tight mb-1">
-                                        <p>Money</p>
-                                        <p>Out</p>
-                                    </div>
-                                    <p className="text-genz-pink font-black text-[10px] min-[375px]:text-xs lg:text-lg whitespace-nowrap truncate"><span className="text-[0.8em] mr-0.5">-</span>₦{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                                </div>
-                                <div className="bg-black/60 backdrop-blur-md rounded-2xl p-2 flex flex-col justify-between border-2 border-white/10 shadow-xl overflow-hidden min-w-0 min-h-[70px]">
-                                    <div className="text-white/50 text-[7px] min-[375px]:text-[9px] font-black uppercase tracking-tighter leading-tight mb-1">
-                                        <p>Total</p>
-                                        <p className="truncate">Transactions</p>
-                                    </div>
-                                    <p className="text-white font-black text-[10px] min-[375px]:text-xs lg:text-lg whitespace-nowrap truncate">₦{(totalIncome + totalExpense).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                                </div>
+                                ))}
                             </div>
                         </div>
 
@@ -1796,7 +1808,7 @@ const App = () => {
                                     <p className="text-sm font-medium">Tap the + button to add your first transaction</p>
                                 </div>
                             ) : (
-                                <div className="space-y-3">
+                                <div className="flex flex-col gap-5">
                                     {transactions.slice(0, 10).map((transaction, index) => (
                                         <div
                                             key={transaction.id || index}
@@ -2228,7 +2240,7 @@ const App = () => {
                             />
                         </div>
 
-                        <div className="space-y-3">
+                        <div className="flex flex-col gap-5">
                             {transactions
                                 .filter(t => {
                                     const search = searchTerm.toLowerCase();
