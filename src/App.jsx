@@ -1753,18 +1753,27 @@ const App = () => {
                                 </p>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-3 mt-8 relative z-10">
-                                <div className="bg-black/50 backdrop-blur-md rounded-2xl p-3 flex flex-col justify-between border-2 border-white/20 shadow-xl">
-                                    <p className="text-white/60 text-[9px] font-bold uppercase tracking-wider mb-1 px-1">Money In</p>
-                                    <p className="text-genz-aqua font-black text-xs min-[375px]:text-sm lg:text-lg whitespace-nowrap"><span className="text-[0.85em] mr-0.5">+ ₦</span>{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                            <div className="grid grid-cols-3 gap-1.5 mt-8 relative z-10">
+                                <div className="bg-black/60 backdrop-blur-md rounded-2xl p-2 flex flex-col justify-between border-2 border-white/10 shadow-xl overflow-hidden min-w-0 min-h-[70px]">
+                                    <div className="text-white/50 text-[7px] min-[375px]:text-[9px] font-black uppercase tracking-tighter leading-tight mb-1">
+                                        <p>Money</p>
+                                        <p>In</p>
+                                    </div>
+                                    <p className="text-genz-aqua font-black text-[10px] min-[375px]:text-xs lg:text-lg whitespace-nowrap truncate"><span className="text-[0.8em] mr-0.5">+</span>₦{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                 </div>
-                                <div className="bg-black/50 backdrop-blur-md rounded-2xl p-3 flex flex-col justify-between border-2 border-white/20 shadow-xl">
-                                    <p className="text-white/60 text-[9px] font-bold uppercase tracking-wider mb-1 px-1">Money Out</p>
-                                    <p className="text-genz-pink font-black text-xs min-[375px]:text-sm lg:text-lg whitespace-nowrap"><span className="text-[0.85em] mr-0.5">- ₦</span>{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                                <div className="bg-black/60 backdrop-blur-md rounded-2xl p-2 flex flex-col justify-between border-2 border-white/10 shadow-xl overflow-hidden min-w-0 min-h-[70px]">
+                                    <div className="text-white/50 text-[7px] min-[375px]:text-[9px] font-black uppercase tracking-tighter leading-tight mb-1">
+                                        <p>Money</p>
+                                        <p>Out</p>
+                                    </div>
+                                    <p className="text-genz-pink font-black text-[10px] min-[375px]:text-xs lg:text-lg whitespace-nowrap truncate"><span className="text-[0.8em] mr-0.5">-</span>₦{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                 </div>
-                                <div className="bg-black/50 backdrop-blur-md rounded-2xl p-3 flex flex-col justify-between border-2 border-white/20 shadow-xl">
-                                    <p className="text-white/60 text-[9px] font-bold uppercase tracking-wider mb-1 px-1">Total</p>
-                                    <p className="text-white font-black text-xs min-[375px]:text-sm lg:text-lg whitespace-nowrap"><span className="text-[0.85em] mr-0.5">₦</span>{(totalIncome + totalExpense).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                                <div className="bg-black/60 backdrop-blur-md rounded-2xl p-2 flex flex-col justify-between border-2 border-white/10 shadow-xl overflow-hidden min-w-0 min-h-[70px]">
+                                    <div className="text-white/50 text-[7px] min-[375px]:text-[9px] font-black uppercase tracking-tighter leading-tight mb-1">
+                                        <p>Total</p>
+                                        <p className="truncate">Transactions</p>
+                                    </div>
+                                    <p className="text-white font-black text-[10px] min-[375px]:text-xs lg:text-lg whitespace-nowrap truncate">₦{(totalIncome + totalExpense).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                 </div>
                             </div>
                         </div>
@@ -1792,22 +1801,24 @@ const App = () => {
                                         <div
                                             key={transaction.id || index}
                                             onClick={() => { setSelectedTransaction(transaction); setCurrentPage('details'); }}
-                                            className="bg-genz-card hover:bg-black/50 rounded-2xl p-4 flex items-center justify-between cursor-pointer border border-genz-card hover:border-genz-purple transition-all group"
+                                            className="bg-genz-card hover:bg-black/50 rounded-2xl p-4 flex items-center justify-between cursor-pointer border border-genz-card hover:border-genz-purple transition-all group gap-2"
                                         >
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 bg-genz-dark rounded-full flex items-center justify-center text-2xl border border-genz-card group-hover:scale-110 transition-transform">
-                                                    <CategoryEmoji category={transaction.category} emoji={transaction.emoji} className="w-6 h-6" />
+                                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-genz-dark rounded-full flex-shrink-0 flex items-center justify-center text-xl sm:text-2xl border border-genz-card group-hover:scale-110 transition-transform">
+                                                    <CategoryEmoji category={transaction.category} emoji={transaction.emoji} className="w-5 h-5 sm:w-6 sm:h-6" />
                                                 </div>
-                                                <div className="flex flex-col">
-                                                    <p className="font-bold text-white text-lg leading-tight">
+                                                <div className="flex flex-col min-w-0">
+                                                    <p className="font-bold text-white text-sm sm:text-lg leading-tight truncate">
                                                         {transaction.category || (transaction.type === 'expense' ? 'Misc' : 'Other')}
                                                     </p>
-                                                    <p className="text-genz-textDim text-xs font-mono mt-1">{new Date(transaction.createdAt).toLocaleDateString()}</p>
+                                                    <p className="text-genz-textDim text-[10px] sm:text-xs font-mono mt-0.5">{new Date(transaction.createdAt).toLocaleDateString()}</p>
                                                 </div>
                                             </div>
-                                            <p className={`text-lg font-black font-mono tracking-tight ${transaction.type === 'income' ? 'text-genz-aqua' : 'text-genz-pink'}`}>
-                                                <span className="text-[0.85em] mr-0.5">{transaction.type === 'income' ? '+ ₦' : '- ₦'}</span>{(transaction.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                                            </p>
+                                            <div className="flex-shrink-0 text-right pr-1">
+                                                <p className={`text-sm sm:text-lg font-black font-mono tracking-tight whitespace-nowrap ${transaction.type === 'income' ? 'text-genz-aqua' : 'text-genz-pink'}`}>
+                                                    <span className="text-[0.85em] mr-0.5">{transaction.type === 'income' ? '+ ₦' : '- ₦'}</span>{(transaction.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                                </p>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -1826,7 +1837,7 @@ const App = () => {
                             setNote('');
                             setCurrentPage('add');
                         }}
-                        className="fixed bottom-28 right-6 bg-genz-pink text-black w-16 h-16 rounded-2xl shadow-genz-purple-brutalist flex items-center justify-center hover:translate-y-1 hover:shadow-none transition-all z-50 border-2 border-genz-purple"
+                        className="fixed bottom-24 right-4 bg-genz-pink text-black w-14 h-14 rounded-2xl shadow-genz-purple-brutalist flex items-center justify-center hover:translate-y-1 hover:shadow-none transition-all z-50 border-2 border-genz-purple scale-90 sm:scale-100 sm:bottom-28 sm:right-6"
                     >
                         <Icons.Plus />
                     </button>
@@ -2233,22 +2244,24 @@ const App = () => {
                                     <div
                                         key={transaction.id || index}
                                         onClick={() => { setSelectedTransaction(transaction); setCurrentPage('details'); }}
-                                        className="bg-genz-card hover:bg-black/50 rounded-2xl p-4 flex items-center justify-between cursor-pointer border border-genz-card hover:border-genz-purple transition-all group"
+                                        className="bg-genz-card hover:bg-black/50 rounded-2xl p-4 flex items-center justify-between cursor-pointer border border-genz-card hover:border-genz-purple transition-all group gap-2"
                                     >
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-genz-dark rounded-full flex items-center justify-center text-2xl border border-genz-card group-hover:scale-110 transition-transform">
-                                                <CategoryEmoji category={transaction.category} emoji={transaction.emoji} className="w-6 h-6" />
+                                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-genz-dark rounded-full flex-shrink-0 flex items-center justify-center text-xl sm:text-2xl border border-genz-card group-hover:scale-110 transition-transform">
+                                                <CategoryEmoji category={transaction.category} emoji={transaction.emoji} className="w-5 h-5 sm:w-6 sm:h-6" />
                                             </div>
-                                            <div className="flex flex-col">
-                                                <p className="font-bold text-white text-lg leading-tight">
+                                            <div className="flex flex-col min-w-0">
+                                                <p className="font-bold text-white text-sm sm:text-lg leading-tight truncate">
                                                     {transaction.category || (transaction.type === 'expense' ? 'Misc' : 'Other')}
                                                 </p>
-                                                <p className="text-genz-textDim text-xs font-mono mt-1">{new Date(transaction.createdAt).toLocaleDateString()}</p>
+                                                <p className="text-genz-textDim text-[10px] sm:text-xs font-mono mt-0.5">{new Date(transaction.createdAt).toLocaleDateString()}</p>
                                             </div>
                                         </div>
-                                        <p className={`text-lg font-black font-mono tracking-tight ${transaction.type === 'income' ? 'text-genz-aqua' : 'text-genz-pink'}`}>
-                                            <span className="text-[0.85em] mr-0.5">{transaction.type === 'income' ? '+ ₦' : '- ₦'}</span>{(transaction.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                                        </p>
+                                        <div className="flex-shrink-0 text-right pr-1">
+                                            <p className={`text-sm sm:text-lg font-black font-mono tracking-tight whitespace-nowrap ${transaction.type === 'income' ? 'text-genz-aqua' : 'text-genz-pink'}`}>
+                                                <span className="text-[0.85em] mr-0.5">{transaction.type === 'income' ? '+ ₦' : '- ₦'}</span>{(transaction.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                            </p>
+                                        </div>
                                     </div>
                                 ))}
                         </div>
