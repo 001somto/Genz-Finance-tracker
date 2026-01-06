@@ -5,16 +5,16 @@ import * as api from './api';
 
 // --- GEN-Z COLORS ---
 const GENZ_COLORS = {
-    aqua: '#4AA8C6',
-    purple: '#9A7DE6',
-    pink: '#D77AA8',
-    bgDark: '#0F1116',
-    cardDark: '#20222A',
-    borderDark: '#2F3138',
-    textLight: '#E6E7EB',
-    textDim: '#9AA0A8',
-    shadow: '#4AA8C650',
-    shadowHover: '#D77AA850', // Pink light shadow
+    aqua: '#3DD8B1',    // More vibrant emerald/aqua
+    purple: '#8B5CF6',  // Premium deep purple (Vite/Next.js style)
+    pink: '#EC4899',    // Modern vibrant pink
+    bgDark: '#14171F',  // Deep navy-grey
+    cardDark: '#2D3343', // Brighter, more distinct card color
+    borderDark: '#3A4255', // Adjusted border for the brighter cards
+    textLight: '#F3F4F6', // Off-white for readability
+    textDim: '#8E95A1',   // Muted grey for secondary text
+    shadow: 'rgba(59, 130, 246, 0.5)',
+    shadowHover: 'rgba(236, 72, 153, 0.4)',
 };
 
 const COLORS = [
@@ -184,6 +184,26 @@ const Icons = {
             <path d="M3 11L8 6L13 11L19 3M19 3H14M19 3V8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
     ),
+    Food: ({ className = "w-6 h-6" }) => (
+        <svg className={`${className} inline-block`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" strokeWidth="2" />
+            {/* Spoon (Left) */}
+            <path d="M8 8c0 1.5.5 2 1 2s1-.5 1-2-.5-2-1-2-1 .5-1 2z" />
+            <path d="M9 10v7" />
+            {/* Fork (Middle) */}
+            <path d="M12 7v3M11 7v2.5a1 1 0 002 0V7M13 7v2.5" />
+            <path d="M12 10.5v6.5" />
+            {/* Knife (Right) */}
+            <path d="M15 7v10M15 7s1.5 1 1.5 4-1.5 3-1.5 3" />
+        </svg>
+    ),
+};
+
+const CategoryEmoji = ({ category, emoji, className = "" }) => {
+    if (category?.toLowerCase() === 'food') {
+        return <Icons.Food className={className} />;
+    }
+    return <span className={className}>{emoji}</span>;
 };
 
 // --- MINI CALENDAR COMPONENT ---
@@ -482,9 +502,9 @@ const CategoryLegend = ({ data, highlightName, palette = COLORS, onHover }) => (
                     >
                         {entry.name}
                     </span>
-                    <span className="text-genz-textDim flex-shrink-0">{entry.emoji}</span>
-                    <span className="text-genz-textDim font-mono text-[10px] flex-shrink-0 ml-auto">
-                        ₦{entry.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    <CategoryEmoji category={entry.name} emoji={entry.emoji} className="w-4 h-4 text-genz-textDim flex-shrink-0" />
+                    <span className="text-genz-textDim font-mono text-[10px] flex-shrink-0 ml-auto flex items-center">
+                        <span className="text-[0.85em] mr-0.5">₦</span>{entry.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </span>
                 </div>
             );
@@ -1711,7 +1731,7 @@ const App = () => {
                     <div className="p-6">
                         <header className="flex justify-between items-end mb-8 mt-2">
                             <div>
-                                <h1 className="text-3xl font-bold tracking-tight mb-1"> Hi, <span className="text-genz-aqua">{user.username || user.email}</span></h1>
+                                <h1 className="text-3xl font-bold tracking-tight mb-1"> Hi, <span className="text-white capitalize">{user.username || user.email}</span></h1>
                                 <p className="text-genz-textDim text-xs font-bold uppercase tracking-widest">
                                     {transactions.length > 0 ? 'Welcome back!' : 'Welcome!'}
                                 </p>
@@ -1722,25 +1742,29 @@ const App = () => {
                             </div>
                         </header>
 
-                        <div className="bg-genz-purple rounded-[2rem] p-8 shadow-genz-pink-brutalist mb-8 relative overflow-hidden group">
+                        <div className="bg-gradient-to-br from-genz-purple via-indigo-600 to-indigo-800 rounded-[2.5rem] p-8 shadow-2xl mb-8 relative overflow-hidden group border border-white/10">
                             <div className="absolute -right-10 -top-10 w-40 h-40 bg-white opacity-10 rounded-full blur-2xl group-hover:scale-150 transition-all duration-700"></div>
-                            <p className="text-black/60 font-bold uppercase tracking-widest text-xs mb-2">Total Balance</p>
-                            <p className="text-5xl font-black text-black tracking-tighter">
-                                {balance < 0 ? '- ₦' : '₦'}{Math.abs(balance).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                            </p>
+                            <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-genz-aqua opacity-10 rounded-full blur-2xl group-hover:scale-125 transition-all duration-700"></div>
+                            <p className="text-white/70 font-bold uppercase tracking-widest text-[10px] mb-3">Total Balance</p>
+                            <div className="flex justify-between items-start">
+                                <p className="text-5xl font-black text-white tracking-tighter flex items-baseline">
+                                    <span className="text-3xl mr-1.5 font-bold opacity-80">{balance < 0 ? '- ₦' : '₦'}</span>
+                                    {Math.abs(balance).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                </p>
+                            </div>
 
-                            <div className="mt-8 grid grid-cols-3 gap-1.5 items-stretch">
-                                <div className="bg-black/20 backdrop-blur-sm rounded-xl p-2.5 flex flex-col justify-between overflow-hidden">
-                                    <p className="text-black text-[10px] font-black uppercase min-h-[22px] flex items-center leading-tight break-words max-w-[42px]">Money In</p>
-                                    <p className="text-genz-aqua font-bold text-[10px] sm:text-xs lg:text-lg whitespace-nowrap">+ ₦{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                            <div className="grid grid-cols-3 gap-3 mt-8 relative z-10">
+                                <div className="bg-black/50 backdrop-blur-md rounded-2xl p-3 flex flex-col justify-between border-2 border-white/20 shadow-xl">
+                                    <p className="text-white/60 text-[9px] font-bold uppercase tracking-wider mb-1 px-1">Money In</p>
+                                    <p className="text-genz-aqua font-black text-xs min-[375px]:text-sm lg:text-lg whitespace-nowrap"><span className="text-[0.85em] mr-0.5">+ ₦</span>{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                 </div>
-                                <div className="bg-black/20 backdrop-blur-sm rounded-xl p-2.5 flex flex-col justify-between overflow-hidden">
-                                    <p className="text-black text-[10px] font-black uppercase min-h-[22px] flex items-center leading-tight break-words max-w-[42px]">Money Out</p>
-                                    <p className="text-genz-pink font-bold text-[10px] sm:text-xs lg:text-lg whitespace-nowrap">- ₦{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                                <div className="bg-black/50 backdrop-blur-md rounded-2xl p-3 flex flex-col justify-between border-2 border-white/20 shadow-xl">
+                                    <p className="text-white/60 text-[9px] font-bold uppercase tracking-wider mb-1 px-1">Money Out</p>
+                                    <p className="text-genz-pink font-black text-xs min-[375px]:text-sm lg:text-lg whitespace-nowrap"><span className="text-[0.85em] mr-0.5">- ₦</span>{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                 </div>
-                                <div className="bg-black/20 backdrop-blur-sm rounded-xl p-2.5 flex flex-col justify-between overflow-hidden">
-                                    <p className="text-black text-[10px] font-black uppercase min-h-[22px] flex items-center leading-tight break-words max-w-[65px]">Total Transactions</p>
-                                    <p className="text-white font-bold text-[10px] sm:text-xs lg:text-lg whitespace-nowrap">₦ {(totalIncome + totalExpense).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                                <div className="bg-black/50 backdrop-blur-md rounded-2xl p-3 flex flex-col justify-between border-2 border-white/20 shadow-xl">
+                                    <p className="text-white/60 text-[9px] font-bold uppercase tracking-wider mb-1 px-1">Total</p>
+                                    <p className="text-white font-black text-xs min-[375px]:text-sm lg:text-lg whitespace-nowrap"><span className="text-[0.85em] mr-0.5">₦</span>{(totalIncome + totalExpense).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                 </div>
                             </div>
                         </div>
@@ -1748,10 +1772,10 @@ const App = () => {
                         {/* Transactions */}
                         <div className="mb-4">
                             <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-xl font-black uppercase tracking-wider text-genz-aqua">Recent Moves</h2>
+                                <h2 className="text-xl font-black uppercase tracking-wider text-genz-purple">Recent Moves</h2>
                                 <button
                                     onClick={() => setCurrentPage('history')}
-                                    className="text-xs text-genz-aqua font-bold uppercase tracking-widest border border-genz-aqua/30 bg-genz-aqua/10 px-3 py-1.5 rounded-full hover:bg-genz-aqua hover:text-black transition-all"
+                                    className="text-xs text-genz-purple font-bold uppercase tracking-widest border border-genz-purple/30 bg-genz-purple/10 px-3 py-1.5 rounded-full hover:bg-genz-purple hover:text-white transition-all"
                                 >
                                     See All ➔
                                 </button>
@@ -1772,7 +1796,7 @@ const App = () => {
                                         >
                                             <div className="flex items-center gap-4">
                                                 <div className="w-12 h-12 bg-genz-dark rounded-full flex items-center justify-center text-2xl border border-genz-card group-hover:scale-110 transition-transform">
-                                                    {transaction.emoji}
+                                                    <CategoryEmoji category={transaction.category} emoji={transaction.emoji} className="w-6 h-6" />
                                                 </div>
                                                 <div className="flex flex-col">
                                                     <p className="font-bold text-white text-lg leading-tight">
@@ -1782,7 +1806,7 @@ const App = () => {
                                                 </div>
                                             </div>
                                             <p className={`text-lg font-black font-mono tracking-tight ${transaction.type === 'income' ? 'text-genz-aqua' : 'text-genz-pink'}`}>
-                                                {transaction.type === 'income' ? '+ ₦' : '- ₦'}{(transaction.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                                <span className="text-[0.85em] mr-0.5">{transaction.type === 'income' ? '+ ₦' : '- ₦'}</span>{(transaction.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                             </p>
                                         </div>
                                     ))}
@@ -1817,7 +1841,7 @@ const App = () => {
                             <button onClick={() => { setCurrentPage('dashboard'); setEditingTransaction(null); }} className="bg-genz-card p-3 rounded-full hover:bg-black/50 border border-genz-card">
                                 <Icons.ArrowLeft />
                             </button>
-                            <h1 className="text-2xl font-black uppercase tracking-wider text-genz-aqua">{editingTransaction ? 'Edit' : 'New'} Move</h1>
+                            <h1 className={`text-2xl font-black uppercase tracking-wider ${transactionType === 'expense' ? 'text-genz-pink' : 'text-genz-aqua'}`}>{editingTransaction ? 'Edit' : 'New'} Move</h1>
                         </div>
 
                         <form onSubmit={addTransaction} className="space-y-6">
@@ -1854,7 +1878,7 @@ const App = () => {
                                         onChange={(e) => setAmount(e.target.value)}
                                         placeholder="0"
                                         disabled={!!editingTransaction}
-                                        className={`w-full bg-genz-card text-white border-2 border-genz-card rounded-[2rem] pl-12 pr-6 py-6 text-4xl font-black focus:outline-none focus:border-genz-purple transition-all placeholder:text-genz-textDim/50 ${editingTransaction ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        className={`w-full bg-genz-card text-white border-2 border-genz-card rounded-[2rem] pl-12 pr-6 py-6 text-4xl font-black focus:outline-none ${transactionType === 'expense' ? 'focus:border-genz-pink' : 'focus:border-genz-aqua'} transition-all placeholder:text-genz-textDim/50 ${editingTransaction ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         required
                                     />
                                 </div>
@@ -1872,11 +1896,11 @@ const App = () => {
                                                 ? (transactionType === 'expense'
                                                     ? 'bg-genz-pink text-black border-transparent shadow-lg shadow-genz-pink/20'
                                                     : 'bg-genz-aqua text-black border-transparent shadow-lg shadow-genz-aqua/20')
-                                                : 'bg-genz-card/50 text-genz-textDim border-genz-borderDark hover:border-genz-aqua/30'
+                                                : `bg-genz-card/50 text-genz-textDim border-genz-borderDark ${transactionType === 'expense' ? 'hover:border-genz-pink/30' : 'hover:border-genz-aqua/30'}`
                                                 }`}
                                         >
                                             {cat.name}
-                                            <span className="text-sm">{cat.emoji}</span>
+                                            <CategoryEmoji category={cat.name} emoji={cat.emoji} className="w-4 h-4" />
                                         </button>
                                     ))}
                                 </div>
@@ -1907,9 +1931,9 @@ const App = () => {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className={`w-full bg-genz-aqua text-black py-5 rounded-2xl font-black hover:bg-genz-purple transition-all shadow-genz-purple-brutalist active:translate-y-1 active:shadow-none flex items-center justify-center gap-2 ${isLoading ? 'opacity-70 cursor-wait' : ''}`}
+                                className={`w-full ${transactionType === 'expense' ? 'bg-genz-pink shadow-lg shadow-genz-pink/30' : 'bg-genz-aqua shadow-lg shadow-genz-aqua/30'} text-black py-5 rounded-2xl font-black hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${isLoading ? 'opacity-70 cursor-wait' : ''}`}
                             >
-                                {isLoading ? <><Icons.Spinner /> Saving...</> : (editingTransaction ? 'Save Changes' : 'Add Transaction')}
+                                {isLoading ? <><Icons.Spinner /> {editingTransaction ? 'Saving...' : 'Adding...'}</> : (editingTransaction ? 'Save Changes' : 'Add Transaction')}
                             </button>
                         </form>
                     </div>
@@ -1931,12 +1955,14 @@ const App = () => {
                             <div className="bg-genz-card border border-genz-card rounded-[2.5rem] p-10 text-center relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-genz-purple via-genz-aqua to-genz-pink"></div>
                                 <h2 className="text-3xl font-bold text-white mb-2">{selectedTransaction.category || (selectedTransaction.type === 'expense' ? 'Misc' : 'Other')}</h2>
-                                <div className="text-7xl mb-6 filter drop-shadow-2xl animate-bounce">{selectedTransaction.emoji}</div>
+                                <div className="text-7xl mb-6 filter drop-shadow-2xl animate-bounce flex justify-center items-center">
+                                    <CategoryEmoji category={selectedTransaction.category} emoji={selectedTransaction.emoji} className="w-14 h-14" />
+                                </div>
                                 <p className="text-genz-textDim font-mono text-sm mb-6">{new Date(selectedTransaction.createdAt).toLocaleString()}</p>
 
                                 <div className="inline-block bg-black/50 px-8 py-4 rounded-2xl border border-genz-card">
                                     <p className={`text-3xl font-black ${selectedTransaction.type === 'income' ? 'text-genz-aqua' : 'text-genz-pink'}`}>
-                                        {selectedTransaction.type === 'income' ? '+ ₦' : '- ₦'}{(selectedTransaction.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                        <span className="text-[0.8em] mr-1">{selectedTransaction.type === 'income' ? '+ ₦' : '- ₦'}</span>{(selectedTransaction.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                     </p>
                                 </div>
 
@@ -1980,12 +2006,12 @@ const App = () => {
                             <div className="bg-genz-card rounded-3xl p-5 border border-genz-card relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-20 h-20 bg-genz-pink blur-[50px] opacity-20"></div>
                                 <p className="text-genz-textDim text-xs font-bold uppercase mb-2">Out</p>
-                                <p className="text-xl font-black text-genz-pink">- ₦{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                                <p className="text-xl font-black text-genz-pink"><span className="text-[0.85em] mr-0.5">- ₦</span>{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                             </div>
                             <div className="bg-genz-card rounded-3xl p-5 border border-genz-card relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-20 h-20 bg-genz-aqua blur-[50px] opacity-20"></div>
                                 <p className="text-genz-textDim text-xs font-bold uppercase mb-2">In</p>
-                                <p className="text-xl font-black text-genz-aqua">+ ₦{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                                <p className="text-xl font-black text-genz-aqua"><span className="text-[0.85em] mr-0.5">+ ₦</span>{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                             </div>
                         </div>
                         <hr className="border-genz-borderDark/50 my-6" />
@@ -2035,7 +2061,9 @@ const App = () => {
                                             const data = getCategoryData().find(d => d.name === activeExpenseCategory);
                                             return data ? (
                                                 <>
-                                                    <span className="text-xs text-genz-textDim font-medium mb-1 truncate w-full">{data.name} {data.emoji}</span>
+                                                    <span className="text-xs text-genz-textDim font-medium mb-1 truncate w-full flex items-center justify-center gap-1">
+                                                        {data.name} <CategoryEmoji category={data.name} emoji={data.emoji} className="w-4 h-4" />
+                                                    </span>
                                                     <span className="text-xl font-black text-white">₦ {data.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                                                     <span className="text-xs text-genz-textDim font-medium mt-1">
                                                         {((data.value / totalExpense) * 100).toFixed(0)}%
@@ -2101,7 +2129,9 @@ const App = () => {
                                             const data = getIncomeCategoryData().find(d => d.name === activeIncomeCategory);
                                             return data ? (
                                                 <>
-                                                    <span className="text-xs text-genz-textDim font-medium mb-1 truncate w-full">{data.name} {data.emoji}</span>
+                                                    <span className="text-xs text-genz-textDim font-medium mb-1 truncate w-full flex items-center justify-center gap-1">
+                                                        {data.name} <CategoryEmoji category={data.name} emoji={data.emoji} className="w-4 h-4" />
+                                                    </span>
                                                     <span className="text-xl font-black text-white">₦ {data.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                                                     <span className="text-xs text-genz-textDim font-medium mt-1">
                                                         {((data.value / totalIncome) * 100).toFixed(0)}%
@@ -2207,7 +2237,7 @@ const App = () => {
                                     >
                                         <div className="flex items-center gap-4">
                                             <div className="w-12 h-12 bg-genz-dark rounded-full flex items-center justify-center text-2xl border border-genz-card group-hover:scale-110 transition-transform">
-                                                {transaction.emoji}
+                                                <CategoryEmoji category={transaction.category} emoji={transaction.emoji} className="w-6 h-6" />
                                             </div>
                                             <div className="flex flex-col">
                                                 <p className="font-bold text-white text-lg leading-tight">
@@ -2217,7 +2247,7 @@ const App = () => {
                                             </div>
                                         </div>
                                         <p className={`text-lg font-black font-mono tracking-tight ${transaction.type === 'income' ? 'text-genz-aqua' : 'text-genz-pink'}`}>
-                                            {transaction.type === 'income' ? '+ ₦' : '- ₦'}{(transaction.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                            <span className="text-[0.85em] mr-0.5">{transaction.type === 'income' ? '+ ₦' : '- ₦'}</span>{(transaction.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                         </p>
                                     </div>
                                 ))}
@@ -2237,7 +2267,7 @@ const App = () => {
                             <div className="w-24 h-24 mx-auto bg-genz-aqua rounded-full flex items-center justify-center text-5xl font-black mb-4 border-4 border-genz-purple shadow-lg">
                                 {user.username ? user.username[0].toUpperCase() : 'U'}
                             </div>
-                            <h2 className="text-3xl font-black mb-1 text-genz-aqua">{user.username || 'User'}</h2>
+                            <h2 className="text-3xl font-black mb-1 text-white capitalize">{user.username || 'User'}</h2>
                             <p className="text-genz-textDim font-mono text-[11px] min-[375px]:text-xs sm:text-base mb-4 truncate px-2">{user.email || 'No Email'}</p>
 
 
@@ -2859,24 +2889,24 @@ const App = () => {
                     <div className="fixed bottom-0 left-0 right-0 h-20 bg-genz-card/95 backdrop-blur-md border-t border-genz-card flex justify-around items-center z-40 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
                         <button
                             onClick={() => setCurrentPage('dashboard')}
-                            className={`flex flex-col items-center p-3 rounded-xl transition-colors ${currentPage === 'dashboard' ? 'text-genz-aqua' : 'text-genz-textDim hover:text-white'}`}
+                            className={`flex flex-col items-center p-3 rounded-xl transition-all duration-300 ${currentPage === 'dashboard' ? 'text-genz-purple scale-110' : 'text-genz-textDim opacity-60 hover:opacity-100'}`}
                         >
                             <Icons.Home />
-                            <span className="text-xs font-medium mt-1">Home</span>
+                            <span className="text-[10px] font-black uppercase tracking-tighter mt-1">Home</span>
                         </button>
                         <button
                             onClick={() => setCurrentPage('analytics')}
-                            className={`flex flex-col items-center p-3 rounded-xl transition-colors ${currentPage === 'analytics' ? 'text-genz-aqua' : 'text-genz-textDim hover:text-white'}`}
+                            className={`flex flex-col items-center p-3 rounded-xl transition-all duration-300 ${currentPage === 'analytics' ? 'text-genz-purple scale-110' : 'text-genz-textDim opacity-60 hover:opacity-100'}`}
                         >
                             <Icons.Chart />
-                            <span className="text-xs font-medium mt-1">Stats</span>
+                            <span className="text-[10px] font-black uppercase tracking-tighter mt-1">Stats</span>
                         </button>
                         <button
                             onClick={() => setCurrentPage('profile')}
-                            className={`flex flex-col items-center p-3 rounded-xl transition-colors ${currentPage === 'profile' ? 'text-genz-aqua' : 'text-genz-textDim hover:text-white'}`}
+                            className={`flex flex-col items-center p-3 rounded-xl transition-all duration-300 ${currentPage === 'profile' ? 'text-genz-purple scale-110' : 'text-genz-textDim opacity-60 hover:opacity-100'}`}
                         >
                             <Icons.User />
-                            <span className="text-xs font-medium mt-1">Profile</span>
+                            <span className="text-[10px] font-black uppercase tracking-tighter mt-1">Profile</span>
                         </button>
                     </div>
                 )
