@@ -157,7 +157,7 @@ const Icons = {
     ArrowLeft: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
     Eye: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>,
     EyeOff: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88L4.573 4.574m14.853 14.853l-2.356-2.356m2.356 2.356L22 22m-4.72-4.72A9.953 9.953 0 0021.542 12c-1.274-4.057-5.064-7-9.542-7-1.274 0-2.435.215-3.513.606m0 0l2.353 2.353" /></svg>,
-    Spinner: () => <svg className="animate-spin h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>,
+    Spinner: ({ className = "h-5 w-5" }) => <svg className={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>,
     ChevronLeft: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>,
     ChevronRight: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>,
     Lock: ({ size = 20, className = "" }) => (
@@ -174,6 +174,14 @@ const Icons = {
         >
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+    ),
+    Trend: () => (
+        <svg className="w-8 h-8 inline-block select-none" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="14" width="3" height="7" rx="1" fill="currentColor" />
+            <rect x="9" y="10" width="3" height="11" rx="1" fill="currentColor" />
+            <rect x="15" y="5" width="3" height="16" rx="1" fill="currentColor" />
+            <path d="M3 11L8 6L13 11L19 3M19 3H14M19 3V8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
     ),
 };
@@ -342,6 +350,7 @@ const INCOME_CATEGORIES = [
     { name: 'Freelance', emoji: '💼' },
     { name: 'Investments', emoji: '📈' },
     { name: 'Assets', emoji: '💎' },
+    { name: 'Debt', emoji: '💳' },
     { name: 'Gift', emoji: '🎁' },
     { name: 'Pension', emoji: '🏦' },
     { name: 'Other', emoji: '💰' },
@@ -467,13 +476,13 @@ const CategoryLegend = ({ data, highlightName, palette = COLORS, onHover }) => (
                         className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                         style={{ backgroundColor: color }}
                     />
-                    <span className="text-genz-textDim flex-shrink-0">{entry.emoji}</span>
                     <span
                         className="font-medium flex-1 truncate transition-colors"
                         style={{ color: isHighlighted ? color : '#E6E7EB' }} // #E6E7EB is textLight
                     >
                         {entry.name}
                     </span>
+                    <span className="text-genz-textDim flex-shrink-0">{entry.emoji}</span>
                     <span className="text-genz-textDim font-mono text-[10px] flex-shrink-0 ml-auto">
                         ₦{entry.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </span>
@@ -618,7 +627,7 @@ const Homepage = ({ onStart }) => {
                         onClick={onStart}
                         className="w-full sm:w-auto px-12 py-5 lg:px-16 lg:py-6 bg-genz-purple text-black font-black uppercase tracking-widest rounded-3xl shadow-genz-purple-brutalist hover:translate-y-1 hover:shadow-none transition-all text-lg lg:text-xl"
                     >
-                        LET'S GET STARTED 🚀
+                        LET'S GET STARTED ➔
                     </button>
                 </div>
 
@@ -747,6 +756,7 @@ const App = () => {
     const [customCategory, setCustomCategory] = useState('');
     const [note, setNote] = useState('');
     const [isLoading, setIsLoading] = useState(false); // NEW: Loading state
+    const [searchTerm, setSearchTerm] = useState(''); // Search for history page
 
     // GAMIFICATION STATE
     const [xp, setXp] = useState(0);
@@ -1407,11 +1417,7 @@ const App = () => {
             }
 
         } catch (err) {
-            if (err?.body?.message === "Insufficient balance. Cannot record this expense.") {
-                showNotification("You do not have enough balance for this expense!", 'error', 4000);
-            } else {
-                handleApiError(err, "Transaction failed");
-            }
+            handleApiError(err, "Transaction failed");
         } finally {
             setIsLoading(false); // Stop Loading
         }
@@ -1616,7 +1622,7 @@ const App = () => {
                                 <h1 className="text-5xl font-black text-white mb-2 tracking-tighter shadow-genz-text">
                                     SPEND<span className="text-genz-pink">SAVE</span>
                                 </h1>
-                                <p className="text-genz-textDim text-sm tracking-widest">{authMode === 'login' ? 'Welcome back! 👋' : 'Join the money tracking revolution 🚀'}</p>
+                                <p className="text-genz-textDim text-sm tracking-widest">{authMode === 'login' ? 'Welcome back!' : 'Join the money tracking revolution 🚀'}</p>
                             </div>
 
                             <div className="flex bg-black/50 p-1 rounded-2xl mb-8 border border-genz-card">
@@ -1705,8 +1711,10 @@ const App = () => {
                     <div className="p-6">
                         <header className="flex justify-between items-end mb-8 mt-2">
                             <div>
-                                <p className="text-genz-textDim text-xs font-bold uppercase tracking-widest mb-1">Welcome back!👋</p>
-                                <h1 className="text-3xl font-bold tracking-tight"> yo, <span className="text-genz-aqua">{user.username || user.email}</span></h1>
+                                <h1 className="text-3xl font-bold tracking-tight mb-1"> Hi, <span className="text-genz-aqua">{user.username || user.email}</span></h1>
+                                <p className="text-genz-textDim text-xs font-bold uppercase tracking-widest">
+                                    {transactions.length > 0 ? 'Welcome back!' : 'Welcome!'}
+                                </p>
                             </div>
                             <div className="bg-genz-card border border-genz-card px-3 py-1 rounded-full flex items-center gap-2">
                                 <span className="text-lg">🔥</span>
@@ -1717,20 +1725,22 @@ const App = () => {
                         <div className="bg-genz-purple rounded-[2rem] p-8 shadow-genz-pink-brutalist mb-8 relative overflow-hidden group">
                             <div className="absolute -right-10 -top-10 w-40 h-40 bg-white opacity-10 rounded-full blur-2xl group-hover:scale-150 transition-all duration-700"></div>
                             <p className="text-black/60 font-bold uppercase tracking-widest text-xs mb-2">Total Balance</p>
-                            <p className="text-5xl font-black text-black tracking-tighter">₦{balance.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                            <p className="text-5xl font-black text-black tracking-tighter">
+                                {balance < 0 ? '- ₦' : '₦'}{Math.abs(balance).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                            </p>
 
                             <div className="mt-8 grid grid-cols-3 gap-1.5 items-stretch">
                                 <div className="bg-black/20 backdrop-blur-sm rounded-xl p-2.5 flex flex-col justify-between overflow-hidden">
                                     <p className="text-black text-[10px] font-black uppercase min-h-[22px] flex items-center leading-tight break-words max-w-[42px]">Money In</p>
-                                    <p className="text-genz-aqua font-bold text-[10px] sm:text-xs lg:text-lg whitespace-nowrap">+₦{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                                    <p className="text-genz-aqua font-bold text-[10px] sm:text-xs lg:text-lg whitespace-nowrap">+ ₦{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                 </div>
                                 <div className="bg-black/20 backdrop-blur-sm rounded-xl p-2.5 flex flex-col justify-between overflow-hidden">
                                     <p className="text-black text-[10px] font-black uppercase min-h-[22px] flex items-center leading-tight break-words max-w-[42px]">Money Out</p>
-                                    <p className="text-genz-pink font-bold text-[10px] sm:text-xs lg:text-lg whitespace-nowrap">-₦{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                                    <p className="text-genz-pink font-bold text-[10px] sm:text-xs lg:text-lg whitespace-nowrap">- ₦{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                 </div>
                                 <div className="bg-black/20 backdrop-blur-sm rounded-xl p-2.5 flex flex-col justify-between overflow-hidden">
                                     <p className="text-black text-[10px] font-black uppercase min-h-[22px] flex items-center leading-tight break-words max-w-[65px]">Total Transactions</p>
-                                    <p className="text-white font-bold text-[10px] sm:text-xs lg:text-lg whitespace-nowrap">₦{(totalIncome + totalExpense).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                                    <p className="text-white font-bold text-[10px] sm:text-xs lg:text-lg whitespace-nowrap">₦ {(totalIncome + totalExpense).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                 </div>
                             </div>
                         </div>
@@ -1739,12 +1749,16 @@ const App = () => {
                         <div className="mb-4">
                             <div className="flex justify-between items-center mb-4">
                                 <h2 className="text-xl font-black uppercase tracking-wider text-genz-aqua">Recent Moves</h2>
-                                <span className="text-x1 text-genz-textDim uppercase tracking-wider font-mono">LAST 10</span>
+                                <button
+                                    onClick={() => setCurrentPage('history')}
+                                    className="text-xs text-genz-aqua font-bold uppercase tracking-widest border border-genz-aqua/30 bg-genz-aqua/10 px-3 py-1.5 rounded-full hover:bg-genz-aqua hover:text-black transition-all"
+                                >
+                                    See All ➔
+                                </button>
                             </div>
 
                             {transactions.length === 0 ? (
                                 <div className="border-2 border-dashed border-genz-card rounded-3xl p-10 text-center">
-                                    <p className="text-4xl mb-4">👻</p>
                                     <p className="text-genz-textDim font-medium">It's quiet in here. Add your first move!</p>
                                     <p className="text-sm font-medium">Tap the + button to add your first transaction</p>
                                 </div>
@@ -1760,13 +1774,15 @@ const App = () => {
                                                 <div className="w-12 h-12 bg-genz-dark rounded-full flex items-center justify-center text-2xl border border-genz-card group-hover:scale-110 transition-transform">
                                                     {transaction.emoji}
                                                 </div>
-                                                <div>
-                                                    <p className="font-bold text-white text-lg leading-tight">{transaction.category}</p>
+                                                <div className="flex flex-col">
+                                                    <p className="font-bold text-white text-lg leading-tight">
+                                                        {transaction.category || (transaction.type === 'expense' ? 'Misc' : 'Other')}
+                                                    </p>
                                                     <p className="text-genz-textDim text-xs font-mono mt-1">{new Date(transaction.createdAt).toLocaleDateString()}</p>
                                                 </div>
                                             </div>
                                             <p className={`text-lg font-black font-mono tracking-tight ${transaction.type === 'income' ? 'text-genz-aqua' : 'text-genz-pink'}`}>
-                                                {transaction.type === 'income' ? '+' : '-'}₦{(transaction.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                                {transaction.type === 'income' ? '+ ₦' : '- ₦'}{(transaction.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                             </p>
                                         </div>
                                     ))}
@@ -1814,7 +1830,7 @@ const App = () => {
                                         : 'text-genz-textDim hover:text-white'
                                         } ${editingTransaction ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
-                                    💸 Expense
+                                    Expense
                                 </button>
                                 <button
                                     type="button"
@@ -1824,7 +1840,7 @@ const App = () => {
                                         : 'text-genz-textDim hover:text-white'
                                         } ${editingTransaction ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
-                                    💰 Income
+                                    Income
                                 </button>
                             </div>
 
@@ -1859,8 +1875,8 @@ const App = () => {
                                                 : 'bg-genz-card/50 text-genz-textDim border-genz-borderDark hover:border-genz-aqua/30'
                                                 }`}
                                         >
-                                            <span className="text-sm">{cat.emoji}</span>
                                             {cat.name}
+                                            <span className="text-sm">{cat.emoji}</span>
                                         </button>
                                     ))}
                                 </div>
@@ -1893,7 +1909,7 @@ const App = () => {
                                 disabled={isLoading}
                                 className={`w-full bg-genz-aqua text-black py-5 rounded-2xl font-black hover:bg-genz-purple transition-all shadow-genz-purple-brutalist active:translate-y-1 active:shadow-none flex items-center justify-center gap-2 ${isLoading ? 'opacity-70 cursor-wait' : ''}`}
                             >
-                                {isLoading ? <><Icons.Spinner /> {editingTransaction ? 'Saving...' : 'Adding...'}</> : (editingTransaction ? 'Save Changes' : 'Add Transaction')}
+                                {isLoading ? <><Icons.Spinner /> Saving...</> : (editingTransaction ? 'Save Changes' : 'Add Transaction')}
                             </button>
                         </form>
                     </div>
@@ -1914,13 +1930,13 @@ const App = () => {
 
                             <div className="bg-genz-card border border-genz-card rounded-[2.5rem] p-10 text-center relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-genz-purple via-genz-aqua to-genz-pink"></div>
+                                <h2 className="text-3xl font-bold text-white mb-2">{selectedTransaction.category || (selectedTransaction.type === 'expense' ? 'Misc' : 'Other')}</h2>
                                 <div className="text-7xl mb-6 filter drop-shadow-2xl animate-bounce">{selectedTransaction.emoji}</div>
-                                <h2 className="text-3xl font-bold text-white mb-2">{selectedTransaction.category}</h2>
                                 <p className="text-genz-textDim font-mono text-sm mb-6">{new Date(selectedTransaction.createdAt).toLocaleString()}</p>
 
                                 <div className="inline-block bg-black/50 px-8 py-4 rounded-2xl border border-genz-card">
                                     <p className={`text-3xl font-black ${selectedTransaction.type === 'income' ? 'text-genz-aqua' : 'text-genz-pink'}`}>
-                                        {selectedTransaction.type === 'income' ? '+' : '-'}₦{(selectedTransaction.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                        {selectedTransaction.type === 'income' ? '+ ₦' : '- ₦'}{(selectedTransaction.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                     </p>
                                 </div>
 
@@ -1955,19 +1971,21 @@ const App = () => {
             {
                 currentPage === 'analytics' && (
                     <div className="min-h-screen bg-genz-dark pb-28 p-6 text-white">
-                        <h1 className="text-4xl font-black text-genz-aqua mb-8">Stats 📊</h1>
+                        <h1 className="text-4xl font-black text-genz-aqua mb-8 flex items-center gap-3">
+                            Stats <Icons.Trend />
+                        </h1>
 
                         {/* Total Income vs Total Expense Comparison (Unchanged) */}
                         <div className="grid grid-cols-2 gap-4 mb-8">
                             <div className="bg-genz-card rounded-3xl p-5 border border-genz-card relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-20 h-20 bg-genz-pink blur-[50px] opacity-20"></div>
                                 <p className="text-genz-textDim text-xs font-bold uppercase mb-2">Out</p>
-                                <p className="text-xl font-black text-genz-pink">-₦{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                                <p className="text-xl font-black text-genz-pink">- ₦{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                             </div>
                             <div className="bg-genz-card rounded-3xl p-5 border border-genz-card relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-20 h-20 bg-genz-aqua blur-[50px] opacity-20"></div>
                                 <p className="text-genz-textDim text-xs font-bold uppercase mb-2">In</p>
-                                <p className="text-xl font-black text-genz-aqua">+₦{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                                <p className="text-xl font-black text-genz-aqua">+ ₦{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                             </div>
                         </div>
                         <hr className="border-genz-borderDark/50 my-6" />
@@ -2017,8 +2035,8 @@ const App = () => {
                                             const data = getCategoryData().find(d => d.name === activeExpenseCategory);
                                             return data ? (
                                                 <>
-                                                    <span className="text-xs text-genz-textDim font-medium mb-1 truncate w-full">{data.emoji} {data.name}</span>
-                                                    <span className="text-xl font-black text-white">₦{data.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                                    <span className="text-xs text-genz-textDim font-medium mb-1 truncate w-full">{data.name} {data.emoji}</span>
+                                                    <span className="text-xl font-black text-white">₦ {data.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                                                     <span className="text-xs text-genz-textDim font-medium mt-1">
                                                         {((data.value / totalExpense) * 100).toFixed(0)}%
                                                     </span>
@@ -2027,7 +2045,7 @@ const App = () => {
                                         })() : (
                                             <>
                                                 <span className="text-xs text-genz-textDim font-bold uppercase tracking-wider mb-1">Total</span>
-                                                <span className="text-xl font-black text-white">₦{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                                <span className="text-xl font-black text-white">₦ {totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                                             </>
                                         )}
                                     </div>
@@ -2083,8 +2101,8 @@ const App = () => {
                                             const data = getIncomeCategoryData().find(d => d.name === activeIncomeCategory);
                                             return data ? (
                                                 <>
-                                                    <span className="text-xs text-genz-textDim font-medium mb-1 truncate w-full">{data.emoji} {data.name}</span>
-                                                    <span className="text-xl font-black text-white">₦{data.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                                    <span className="text-xs text-genz-textDim font-medium mb-1 truncate w-full">{data.name} {data.emoji}</span>
+                                                    <span className="text-xl font-black text-white">₦ {data.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                                                     <span className="text-xs text-genz-textDim font-medium mt-1">
                                                         {((data.value / totalIncome) * 100).toFixed(0)}%
                                                     </span>
@@ -2093,7 +2111,7 @@ const App = () => {
                                         })() : (
                                             <>
                                                 <span className="text-xs text-genz-textDim font-bold uppercase tracking-wider mb-1">Total</span>
-                                                <span className="text-xl font-black text-white">₦{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                                <span className="text-xl font-black text-white">₦ {totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                                             </>
                                         )}
                                     </div>
@@ -2148,6 +2166,66 @@ const App = () => {
                 )
             }
 
+            {/* History Page */}
+            {
+                currentPage === 'history' && user && (
+                    <div className="min-h-screen bg-genz-dark pb-28 p-6 text-white">
+                        <div className="flex items-center gap-4 mb-8">
+                            <button onClick={() => setCurrentPage('dashboard')} className="bg-genz-card p-3 rounded-full hover:bg-black/50 border border-genz-card">
+                                <Icons.ArrowLeft />
+                            </button>
+                            <h1 className="text-2xl font-black uppercase text-genz-aqua">History</h1>
+                        </div>
+
+                        <div className="relative mb-6">
+                            <input
+                                type="text"
+                                placeholder="Search by category, amount or date..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full bg-genz-card border border-genz-card rounded-2xl py-4 pl-4 pr-4 text-white font-bold focus:outline-none focus:border-genz-aqua transition-colors"
+                            />
+                        </div>
+
+                        <div className="space-y-3">
+                            {transactions
+                                .filter(t => {
+                                    const search = searchTerm.toLowerCase();
+                                    const dateStr = new Date(t.createdAt).toLocaleDateString().toLowerCase();
+                                    return (
+                                        (t.category || '').toLowerCase().includes(search) ||
+                                        dateStr.includes(search) ||
+                                        (t.type || '').toLowerCase().includes(search) ||
+                                        (t.amount || 0).toString().includes(search)
+                                    );
+                                })
+                                .map((transaction, index) => (
+                                    <div
+                                        key={transaction.id || index}
+                                        onClick={() => { setSelectedTransaction(transaction); setCurrentPage('details'); }}
+                                        className="bg-genz-card hover:bg-black/50 rounded-2xl p-4 flex items-center justify-between cursor-pointer border border-genz-card hover:border-genz-purple transition-all group"
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-genz-dark rounded-full flex items-center justify-center text-2xl border border-genz-card group-hover:scale-110 transition-transform">
+                                                {transaction.emoji}
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <p className="font-bold text-white text-lg leading-tight">
+                                                    {transaction.category || (transaction.type === 'expense' ? 'Misc' : 'Other')}
+                                                </p>
+                                                <p className="text-genz-textDim text-xs font-mono mt-1">{new Date(transaction.createdAt).toLocaleDateString()}</p>
+                                            </div>
+                                        </div>
+                                        <p className={`text-lg font-black font-mono tracking-tight ${transaction.type === 'income' ? 'text-genz-aqua' : 'text-genz-pink'}`}>
+                                            {transaction.type === 'income' ? '+ ₦' : '- ₦'}{(transaction.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                        </p>
+                                    </div>
+                                ))}
+                        </div>
+                    </div>
+                )
+            }
+
             {/* Profile Page (Unchanged) */}
             {
                 currentPage === 'profile' && user && (
@@ -2162,28 +2240,7 @@ const App = () => {
                             <h2 className="text-3xl font-black mb-1 text-genz-aqua">{user.username || 'User'}</h2>
                             <p className="text-genz-textDim font-mono text-[11px] min-[375px]:text-xs sm:text-base mb-4 truncate px-2">{user.email || 'No Email'}</p>
 
-                            {/* LEVEL & XP */}
-                            <div className="mt-6 mb-2 px-4">
-                                <div className="flex justify-between items-end mb-2">
-                                    <div className="flex flex-col items-start">
-                                        <span className="text-genz-aqua font-black text-xl uppercase tracking-widest leading-none">Level {level}</span>
-                                        <span className="text-[10px] text-genz-textDim font-bold uppercase mt-1">Status: {level >= 5 ? 'Grandmaster' : 'Prospective'}</span>
-                                    </div>
-                                    <span className="text-right flex flex-col items-end">
-                                        <span className="text-xs text-genz-textDim font-bold">{currentLevelProgress} / {xpForNextLevel} XP</span>
-                                        <span className="text-[10px] text-genz-aqua font-black">{Math.round((currentLevelProgress / xpForNextLevel) * 100)}%</span>
-                                    </span>
-                                </div>
-                                <div className="w-full h-4 bg-white/10 rounded-full overflow-hidden border border-white/20 relative shadow-inner">
-                                    <div
-                                        className="h-full bg-gradient-to-r from-genz-aqua via-genz-purple to-genz-pink shadow-[0_0_20px_rgba(154,125,230,0.6)] relative transition-all duration-1000 ease-out"
-                                        style={{ width: `${(currentLevelProgress / xpForNextLevel) * 100}%` }}
-                                    >
-                                        {/* Bright leading edge for visibility */}
-                                        <div className="absolute right-0 top-0 bottom-0 w-1 bg-white/80 shadow-[0_0_10px_#fff]"></div>
-                                    </div>
-                                </div>
-                            </div>
+
 
                             <div className="mt-8 pt-4 border-t border-genz-borderDark/50">
                                 {/* Monthly Targets Section */}
@@ -2199,7 +2256,7 @@ const App = () => {
 
                                 <div className="space-y-4">
                                     {budgets.length === 0 ? (
-                                        <p className="text-center text-genz-textDim text-lg font-medium italic">✨ No targets set yet. Add one to track your spending!🎯</p>
+                                        <p className="text-center text-genz-textDim text-lg font-medium italic"> No targets set yet. Add one to track your spending!</p>
                                     ) : (
                                         budgets.map(budget => {
                                             const spent = calculateBudgetProgress(budget.category, budget);
@@ -2210,7 +2267,6 @@ const App = () => {
                                                 <div key={budget._id || budget.id} className="bg-black/30 rounded-xl p-3 relative group">
                                                     <div className="flex justify-between items-center mb-2">
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-xl">{EXPENSE_CATEGORIES.find(c => c.name === budget.category)?.emoji || '💰'}</span>
                                                             <div className="flex flex-col">
                                                                 <span className="font-bold text-sm leading-tight">{budget.category}</span>
                                                                 <span className="text-[9px] text-genz-textDim uppercase tracking-tighter opacity-70 flex flex-col sm:flex-row sm:gap-1">
@@ -2224,6 +2280,7 @@ const App = () => {
                                                                     </span>
                                                                 </span>
                                                             </div>
+                                                            <span className="text-xl">{EXPENSE_CATEGORIES.find(c => c.name === budget.category)?.emoji || '💰'}</span>
                                                         </div>
                                                         <div className="text-right">
                                                             <span className={`text-xs font-bold ${isExceeded ? 'text-genz-pink' : 'text-white'}`}>
@@ -2269,7 +2326,7 @@ const App = () => {
 
                                     <div className="space-y-4">
                                         {savingsGoals.length === 0 ? (
-                                            <p className="text-center text-genz-textDim text-xl font-medium italic">✨ Set a goal to save more! 🚀</p>
+                                            <p className="text-center text-genz-textDim text-xl font-medium italic"> Set a goal to save more! </p>
                                         ) : (
                                             savingsGoals.map(goal => {
                                                 const goalId = goal._id || goal.id;
@@ -2281,7 +2338,6 @@ const App = () => {
                                                     <div key={goalId} className={`rounded-xl p-3 relative group ${isCompleted ? 'bg-green-900/20 border border-green-500/30' : 'bg-black/30'}`}>
                                                         <div className="flex justify-between items-start mb-2">
                                                             <div className="flex items-center gap-2">
-                                                                <span className="text-xl">{goal.emoji || INCOME_CATEGORIES.find(c => c.name === goal.category)?.emoji || '💰'}</span>
                                                                 <div className="flex flex-col">
                                                                     <span className="font-bold text-sm text-white">{goal.category}</span>
                                                                     <span className="text-[9px] text-genz-textDim font-bold uppercase tracking-tighter opacity-70 flex flex-col sm:flex-row sm:gap-1">
@@ -2295,6 +2351,7 @@ const App = () => {
                                                                         </span>
                                                                     </span>
                                                                 </div>
+                                                                <span className="text-xl">{goal.emoji || INCOME_CATEGORIES.find(c => c.name === goal.category)?.emoji || '💰'}</span>
                                                             </div>
                                                             <div className="text-right">
                                                                 <span className="text-xs font-bold text-green-400">
@@ -2432,7 +2489,7 @@ const App = () => {
                                 showBudgetModal && (
                                     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
                                         <div className="bg-genz-card border border-genz-borderDark w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col overflow-hidden">
-                                            <h3 className="text-2xl font-black text-white mb-4 shrink-0">Set Target 🎯</h3>
+                                            <h3 className="text-2xl font-black text-white mb-4 shrink-0">Set Target </h3>
                                             <form onSubmit={handleAddBudget} className="flex flex-col flex-1 overflow-hidden">
                                                 <div className="flex-1 overflow-y-auto space-y-5 pr-2 custom-scrollbar">
                                                     <div>
@@ -2608,7 +2665,7 @@ const App = () => {
                                 showSavingsModal && (
                                     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
                                         <div className="bg-genz-card border border-genz-borderDark w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col overflow-hidden">
-                                            <h3 className="text-2xl font-black text-white mb-4">Set Goal 🎯</h3>
+                                            <h3 className="text-2xl font-black text-white mb-4">Set Goal </h3>
                                             <form onSubmit={handleAddSavingsGoal} className="flex flex-col flex-1 overflow-hidden">
                                                 <div className="flex-1 overflow-y-auto space-y-5 pr-2 custom-scrollbar">
                                                     <div>

@@ -7,7 +7,7 @@ const isLocal = hostname === "localhost" ||
   hostname.startsWith("10.");
 
 const API_BASE = isLocal
-  ? `http://${hostname}:4000x`
+  ? `http://${hostname}:4000`
   : (import.meta.env.VITE_API_BASE || "https://genz-finance-tracker.onrender.com");
 
 async function request(path, options = {}) {

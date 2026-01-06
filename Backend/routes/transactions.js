@@ -27,27 +27,7 @@ router.post('/', auth, async (req, res) => {
             return res.status(400).json({ message: 'Invalid amount' });
         }
 
-        // 1. Calculate user current balance (ensure numeric sums)
-        const transactions = await Transaction.find({ user: req.user });
-
-        const totalIncome = transactions
-            .filter(t => t.type === 'income')
-            .reduce((sum, t) => sum + Number(t.amount || 0), 0);
-
-        const totalExpense = transactions
-            .filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + Number(t.amount || 0), 0);
-
-        const currentBalance = totalIncome - totalExpense;
-
-        // 2. Prevent spending more than available
-        if (type === 'expense' && amount > currentBalance) {
-            return res.status(400).json({
-                message: 'Insufficient balance. Cannot record this expense.'
-            });
-        }
-
-        // 3. Save transaction if allowed (persist numeric amount)
+        // Save transaction (persist numeric amount)
         const tx = await Transaction.create({ ...req.body, amount, user: req.user });
         res.json(tx);
     } catch (err) {
